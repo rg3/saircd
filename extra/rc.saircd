@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Copyright 2012 Ricardo Garcia Gonzalez
+#
+# This file is part of saircd.
+# 
+# saircd is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# saircd is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with saircd.  If not, see <http://www.gnu.org/licenses/>.
+
+saircd=/usr/local/bin/saircd
+config=/usr/local/etc/saircd/saircd.conf
+
+daemon_start()
+{
+	# The "daemon" option must be set or this will block.
+	$saircd $config
+}
+
+daemon_stop()
+{
+	pkill saircd
+}
+
+case "$1" in
+	start)
+		daemon_start
+		;;
+	stop)
+		daemon_stop
+		;;
+	restart)
+		daemon_stop
+		sleep 1
+		daemon_start
+		;;
+	*)
+		echo "Usage: $0 start|stop|restart" 1>&2
+		exit 1
+		;;
+esac

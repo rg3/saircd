@@ -389,6 +389,7 @@ void test_get_modify_client(void)
 	cli.last_activity = 0;
 	cli.last_ping = 0;
 	cli.id_oper = id_oper;
+	cli.is_quitting = 1;
 
 	++tests_counter;
 	if (db_modify_client(db, &cli) != 0) {

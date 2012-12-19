@@ -110,6 +110,7 @@ static void db_fill_client_from_row(sqlite3_stmt *stmt, struct db_client *out, i
 	out->last_ping = (time_t)sqlite3_column_int64(stmt, 22 + offset);
 	out->last_talk = (time_t)sqlite3_column_int64(stmt, 23 + offset);
 	out->signon_time = (time_t)sqlite3_column_int64(stmt, 24 + offset);
+	out->is_quitting = sqlite3_column_int(stmt, 25 + offset);
 }
 
 static void db_fill_channel_from_row(sqlite3_stmt *stmt, struct db_channel *out, int offset)
@@ -170,6 +171,7 @@ static void db_bind_client_data(sqlite3_stmt *stmt, const struct db_client *in)
 	assert(sqlite3_bind_int64(stmt, 22, in->last_ping) == SQLITE_OK);
 	assert(sqlite3_bind_int64(stmt, 23, in->last_talk) == SQLITE_OK);
 	assert(sqlite3_bind_int64(stmt, 24, in->signon_time) == SQLITE_OK);
+	assert(sqlite3_bind_int(stmt, 25, in->is_quitting) == SQLITE_OK);
 }
 
 static void db_bind_channel_data(sqlite3_stmt *stmt, const struct db_channel *in)
@@ -260,7 +262,8 @@ sqlite3 *db_create(void)
 		"last_activity INTEGER,"
 		"last_ping INTEGER,"
 		"last_talk INTEGER,"
-		"signon_time INTEGER);"
+		"signon_time INTEGER,"
+		"is_quitting INTEGER);"
 	);
 
 	db_simple_exec(db,
@@ -993,8 +996,8 @@ int db_add_client(sqlite3 *db, struct db_client *in)
 		"invisible_flag, wallops_flag, restricted_flag, "
 		"operator_flag, local_operator_flag, server_notices_flag, "
 		"array_index, regstate, last_activity, last_ping, "
-		"last_talk, signon_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "
-		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+		"last_talk, signon_time, is_quitting) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "
+		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1036,7 +1039,7 @@ int db_modify_client(sqlite3 *db, const struct db_client *in)
 		"operator_flag = ?, local_operator_flag = ?, "
 		"server_notices_flag = ?, array_index = ?, regstate = ?, "
 		"last_activity = ?, last_ping = ?, last_talk = ?, "
-		"signon_time = ? WHERE id_client = ?;";
+		"signon_time = ?, is_quitting = ? WHERE id_client = ?;";
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1044,7 +1047,7 @@ int db_modify_client(sqlite3 *db, const struct db_client *in)
 
 	sqlite3_reset(stmt);
 	db_bind_client_data(stmt, in);
-	assert(sqlite3_bind_int64(stmt, 25, in->id_client) == SQLITE_OK);
+	assert(sqlite3_bind_int64(stmt, 26, in->id_client) == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1864,7 +1867,8 @@ int db_run_on_non_anon_neighbors(sqlite3 *db, sqlite3_int64 cli, db_callback cal
 	 * query is always welcome, though. */
 	static sqlite3_stmt *stmt;
 	static const char query[] =
-		"SELECT * FROM client WHERE client.id_client != ? AND client.id_client IN "
+		"SELECT * FROM client WHERE "
+		"client.id_client != ? AND client.is_quitting = 0 AND client.id_client IN "
 		"(SELECT id_client FROM membership WHERE membership.id_channel IN "
 		"(SELECT membership.id_channel FROM membership INNER JOIN channel ON "
 		" membership.id_channel = channel.id_channel "
@@ -1908,7 +1912,7 @@ int db_run_on_anon_neighbors(sqlite3 *db, sqlite3_int64 cli, db_callback callbac
 		"membership INNER JOIN client INNER JOIN channel "
 		"ON membership.id_channel = channel.id_channel AND "
 		"   membership.id_client = client.id_client "
-		"WHERE client.id_client != ? AND "
+		"WHERE client.id_client != ? AND client.is_quitting = 0 AND "
 		"      channel.anonymous_flag = 1 AND "
 		"      channel.quiet_flag = 0 AND membership.id_channel IN "
 		" (SELECT id_channel FROM membership WHERE id_client = ?);";
@@ -1933,7 +1937,7 @@ int db_run_on_anon_neighbors(sqlite3 *db, sqlite3_int64 cli, db_callback callbac
 
 		/* Get client and channel data and run callback on it. */
 		db_fill_client_from_row(stmt, &(cc.client), 0);
-		db_fill_channel_from_row(stmt, &(cc.channel), 25);
+		db_fill_channel_from_row(stmt, &(cc.channel), 26);
 		callback((void *)(&cc), extra);
 	}
 	

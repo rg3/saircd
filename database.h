@@ -65,6 +65,7 @@ struct db_client {
 	time_t last_ping;
 	time_t last_talk;
 	time_t signon_time;
+	int is_quitting;
 };
 
 struct db_channel {

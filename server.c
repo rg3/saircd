@@ -1593,10 +1593,10 @@ static void srv_process_who(struct server *srv, struct db_client *cli, struct co
 	/*
 	 * I had to look at the ircd source code to know how to build part of
 	 * the WHO response. In particular, the [HG]\*?[@+]? string. G or H is
-	 * chosen according to the client's away state, the asterisk is present
-	 * if the user is a network operator and the @ or + signs in case the
-	 * reply conveys channel membership information, to indicate channel
-	 * operator or voice flags.
+	 * chosen according to the client's away state (mnemonics: Gone or
+	 * Here), the asterisk is present if the user is a network operator and
+	 * the @ or + signs in case the reply conveys channel membership
+	 * information, to indicate channel operator or voice flags.
 	 */
 	struct db_client tcli;
 	struct db_channel tchan;

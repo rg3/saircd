@@ -3200,6 +3200,14 @@ static void srv_client_quit(struct server *srv, struct db_client *cli, const cha
 	anon_args.srv = srv;
 	anon_args.cli = cli;
 
+	/*
+	 * Mark client as about to quit. This prevents creating a recursive
+	 * loop when messaging the client neighbors if they, in turn, are
+	 * disconnected by filling their output buffer.
+	 */
+	cli->is_quitting = 1;
+	db_modify_client(srv->db, cli);
+
 	/* Run callbacks and disconnect client. */
 	db_run_on_anon_neighbors(srv->db, cli->id_client, srv_anon_neighbor_cb, &anon_args);
 	db_run_on_non_anon_neighbors(srv->db, cli->id_client, srv_enqueue_cb, &cb_args);

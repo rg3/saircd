@@ -2031,6 +2031,10 @@ static void srv_process_kill(struct server *srv, struct db_client *cli, struct c
 
 static void srv_report_cmd_stats(struct server *srv, struct db_client *cli)
 {
+	/*
+	 * These names must be totally related to CMD_BASE_NUMBER,
+	 * CMD_TOP_NUMBER and other CMD_* constants.
+	 */
 	static const char *cmd_names[] = {
 		"*", "PASS", "NICK", "USER", "OPER", "MODE", "SERVICE", "QUIT",
 		"SQUIT", "JOIN", "PART", "*", "TOPIC", "NAMES", "LIST",

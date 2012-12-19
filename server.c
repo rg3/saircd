@@ -46,6 +46,15 @@
  * Static function prototypes.
  */
 
+/* Allocate memory. */
+static char *srv_malloc(size_t sz);
+
+/* Allocate MESSAGE_BUFFER_SIZE bytes. */
+static char *srv_malloc_msg(void);
+
+/* Free memory. */
+static void srv_free(char **ptr);
+
 /* Caps IRC message to the given length. */
 static int srv_fix_message(char *msg, int max, int snprintfret);
 
@@ -266,6 +275,26 @@ struct srv_list_masks_args {
 	struct db_channel *chan;
 };
 
+static char *srv_malloc(size_t sz)
+{
+	char *ret = malloc(sz);
+	assert(ret != NULL);
+	return ret;
+}
+
+static char *srv_malloc_msg(void)
+{
+	return srv_malloc(MESSAGE_BUFFER_SIZE);
+}
+
+static void srv_free(char **ptr)
+{
+	assert(ptr != NULL);
+	assert(*ptr != NULL);
+	free(*ptr);
+	ptr = NULL;
+}
+
 static int srv_fix_message(char *msg, int size, int snprintfret)
 {
 	if (size < 3) /* Enough room for \r\n\0 at least. */
@@ -319,11 +348,12 @@ static int srv_fmt(char *msg, int max, const char *fmt, ...)
 
 static void srv_vfmt_enq(struct server *srv, struct db_client *cli, const char *fmt, va_list ap)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
 	len = srv_vfmt(msg, MESSAGE_BUFFER_SIZE, fmt, ap);
 	srv_enqueue_client_data(srv, cli, msg, len);
+	srv_free(&msg);
 }
 
 static void srv_fmt_enq(struct server *srv, struct db_client *cli, const char *fmt, ...)
@@ -342,7 +372,7 @@ static const char *srv_dest_nick(const struct db_client *cli)
 
 static void srv_log(struct server *srv, const char *str)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
 	struct srv_enqueue_cb_args args;
@@ -354,6 +384,7 @@ static void srv_log(struct server *srv, const char *str)
 	args.len = len;
 	assert(db_run_on_members(srv->db, srv->dyndata.logchan.id_channel,
 				 srv_enqueue_cb, &args) == 0);
+	srv_free(&msg);
 }
 
 static void srv_send_error_restricted(struct server *srv, struct db_client *cli)
@@ -654,7 +685,7 @@ static void srv_send_reply_inviting(struct server *srv, struct db_client *cli, c
 
 static void srv_rebuild_cli_fullname(struct server *srv, struct db_client *cli)
 {
-	char aux[MESSAGE_BUFFER_SIZE];
+	char *aux = srv_malloc_msg();
 
 	strcpy(aux, cli->username);
 	irclower(aux);
@@ -666,6 +697,7 @@ static void srv_rebuild_cli_fullname(struct server *srv, struct db_client *cli)
 	snprintf(aux, MESSAGE_BUFFER_SIZE, "CLID_%lld is now %s",
 		 (long long)(cli->id_client), cli->fullname);
 	srv_log(srv, aux);
+	srv_free(&aux);
 }
 
 static void srv_registration_complete(struct server *srv, struct db_client *cli)
@@ -681,7 +713,7 @@ static void srv_registration_complete(struct server *srv, struct db_client *cli)
 
 static void srv_nickname_change(struct server *srv, struct db_client *cli, const char *old_fullname)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	struct srv_enqueue_cb_args cbargs;
 	int len;
 
@@ -692,11 +724,12 @@ static void srv_nickname_change(struct server *srv, struct db_client *cli, const
 	cbargs.msg = msg;
 	cbargs.len = len;
 	assert(db_run_on_neighbors(srv->db, cli->id_client, srv_enqueue_cb, &cbargs) == 0); 
+	srv_free(&msg);
 }
 
 static void srv_process_nick(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char ofn[MESSAGE_BUFFER_SIZE];
+	char *ofn;
 	struct db_client other;
 	char lnick[NICKNAME_BUFFER_SIZE];
 
@@ -729,9 +762,11 @@ static void srv_process_nick(struct server *srv, struct db_client *cli, struct c
 			srv_registration_complete(srv, cli);
 	} else if (cli->regstate & REGSTATE_USER) {
 		/* Nickname change. */
+		ofn = srv_malloc_msg();
 		strcpy(ofn, cli->orig_fullname);
 		srv_rebuild_cli_fullname(srv, cli);
 		srv_nickname_change(srv, cli, ofn);
+		srv_free(&ofn);
 	}
 }
 
@@ -763,10 +798,11 @@ static void srv_process_pong(struct db_client *cli)
 
 static void srv_process_quit(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 
 	srv_fmt(msg, MESSAGE_BUFFER_SIZE, "User quit: %s", c->args.cmd_quit.message);
 	srv_client_quit(srv, cli, msg);
+	srv_free(&msg);
 }
 
 static void srv_process_ping(struct server *srv, struct db_client *cli, struct command *c)
@@ -831,9 +867,9 @@ static void srv_process_motd(struct server *srv, struct db_client *cli)
 
 static void srv_process_privmsg(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char lnick[MESSAGE_BUFFER_SIZE];
-	char lchan[MESSAGE_BUFFER_SIZE];
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *lnick;
+	char *lchan;
+	char *msg;
 	int len;
 
 	struct db_client tcli;
@@ -845,6 +881,7 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 
 	switch (c->args.cmd_privmsg.target_type) {
 	case TYPE_NICK:
+		lnick = srv_malloc_msg();
 		nick = c->args.cmd_privmsg.target.nickname;
 
 		strcpy(lnick, nick);
@@ -852,8 +889,11 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 
 		if (db_get_client_by_nick(srv->db, lnick, &tcli) != 0) {
 			srv_send_error_nosuchnick(srv, cli, nick);
+			srv_free(&lnick);
 			return;
 		}
+
+		srv_free(&lnick);
 
 		srv_fmt_enq(srv, &tcli, ":%s PRIVMSG %s :%s\r\n",
 			    cli->orig_fullname, tcli.orig_nickname, c->args.cmd_privmsg.text);
@@ -863,6 +903,7 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 
 		break;
 	case TYPE_CHAN:
+		lchan = srv_malloc_msg();
 		chan = c->args.cmd_privmsg.target.channel;
 
 		strcpy(lchan, chan);
@@ -870,14 +911,18 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 
 		if (db_get_channel_by_name(srv->db, lchan, &tchan) != 0) {
 			srv_send_error_nosuchnick(srv, cli, chan);
+			srv_free(&lchan);
 			return;
 		}
+
+		srv_free(&lchan);
 
 		if (!db_client_may_talk(srv->db, cli, &tchan)) {
 			srv_send_error_cannotsendtochan(srv, cli, tchan.orig_name);
 			return;
 		}
 
+		msg = srv_malloc_msg();
 		origin = (tchan.anonymous_flag)?"anonymous!anonymous@anonymous":cli->orig_fullname;
 		len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s PRIVMSG %s :%s\r\n",
 			      origin, tchan.orig_name, c->args.cmd_privmsg.text);
@@ -887,6 +932,7 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 		args.len = len;
 		db_run_on_members_except(srv->db, tchan.id_channel, cli->id_client, srv_enqueue_cb, &args);
 
+		srv_free(&msg);
 		break;
 	}
 }
@@ -894,7 +940,7 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 static void srv_process_notice(struct server *srv, struct db_client *cli, struct command *c)
 {
 	char lc[NICKNAME_BUFFER_SIZE];
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
 	struct db_client tcli;
@@ -918,7 +964,7 @@ static void srv_process_notice(struct server *srv, struct db_client *cli, struct
 			      cli->orig_fullname, tcli.orig_nickname, c->args.cmd_notice.text);
 		srv_enqueue_client_data(srv, &tcli, msg, len);
 
-		return;
+		break;
 
 	case TYPE_CHAN:
 		chan = c->args.cmd_notice.target.channel;
@@ -935,8 +981,10 @@ static void srv_process_notice(struct server *srv, struct db_client *cli, struct
 		args.msg = msg;
 		args.len = len;
 		db_run_on_members_except(srv->db, tchan.id_channel, cli->id_client, srv_enqueue_cb, &args);
-		return;
+		break;
 	}
+
+	srv_free(&msg);
 }
 
 struct srv_chan_mode_action_reply {
@@ -960,7 +1008,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 {
 	char lnick[NICKNAME_BUFFER_SIZE];
 	char lchan[CHANNEL_BUFFER_SIZE];
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 	struct _type_nick *p;
 	struct _type_chan *ptc;
@@ -992,6 +1040,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 
 		if (strcmp(lnick, cli->nickname) != 0) {
 			srv_send_error_usersdontmatch(srv, cli);
+			srv_free(&msg);
 			return;
 		}
 
@@ -1471,6 +1520,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 		}
 		break;
 	}
+	srv_free(&msg);
 }
 
 static void srv_list_bans_cb(void *mask_, void *args_)
@@ -1758,7 +1808,7 @@ static void srv_process_userhost(struct server *srv, struct db_client *cli, stru
 	int i;
 	int used;
 
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
 	len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s %03d %s ",
@@ -1778,14 +1828,14 @@ static void srv_process_userhost(struct server *srv, struct db_client *cli, stru
 		++used;
 	}
 
-	if (used == 0)
-		return;
-
-	len += srv_fmt(msg + len, MESSAGE_BUFFER_SIZE - len, "\r\n");
-	msg[MESSAGE_BUFFER_SIZE - 1] = '\0';
-	msg[MESSAGE_BUFFER_SIZE - 2] = '\n';
-	msg[MESSAGE_BUFFER_SIZE - 3] = '\r';
-	srv_enqueue_client_data(srv, cli, msg, len);
+	if (used != 0) {
+		len += srv_fmt(msg + len, MESSAGE_BUFFER_SIZE - len, "\r\n");
+		msg[MESSAGE_BUFFER_SIZE - 1] = '\0';
+		msg[MESSAGE_BUFFER_SIZE - 2] = '\n';
+		msg[MESSAGE_BUFFER_SIZE - 3] = '\r';
+		srv_enqueue_client_data(srv, cli, msg, len);
+	}
+	srv_free(&msg);
 }
 
 static void srv_process_ison(struct server *srv, struct db_client *cli, struct command *c)
@@ -1796,7 +1846,7 @@ static void srv_process_ison(struct server *srv, struct db_client *cli, struct c
 	int i;
 	int used;
 
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
 	len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s %03d %s ",
@@ -1814,19 +1864,20 @@ static void srv_process_ison(struct server *srv, struct db_client *cli, struct c
 		++used;
 	}
 
-	if (used == 0)
-		return;
-
-	len += srv_fmt(msg + len, MESSAGE_BUFFER_SIZE - len, "\r\n");
-	msg[MESSAGE_BUFFER_SIZE - 1] = '\0';
-	msg[MESSAGE_BUFFER_SIZE - 2] = '\n';
-	msg[MESSAGE_BUFFER_SIZE - 3] = '\r';
-	srv_enqueue_client_data(srv, cli, msg, len);
+	if (used != 0) {
+		len += srv_fmt(msg + len, MESSAGE_BUFFER_SIZE - len, "\r\n");
+		msg[MESSAGE_BUFFER_SIZE - 1] = '\0';
+		msg[MESSAGE_BUFFER_SIZE - 2] = '\n';
+		msg[MESSAGE_BUFFER_SIZE - 3] = '\r';
+		srv_enqueue_client_data(srv, cli, msg, len);
+	}
+	
+	srv_free(&msg);
 }
 
 static void srv_process_oper(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 
 	struct db_client other;
 	sqlite3_int64 id_oper;
@@ -1845,6 +1896,7 @@ static void srv_process_oper(struct server *srv, struct db_client *cli, struct c
 			 (long long)(cli->id_client), c->args.cmd_oper.name);
 		srv_log(srv, msg);
 
+		srv_free(&msg);
 		return;
 	}
 
@@ -1856,6 +1908,8 @@ static void srv_process_oper(struct server *srv, struct db_client *cli, struct c
 	snprintf(msg, MESSAGE_BUFFER_SIZE, "CLID_%lld OPER succeeded for name %s",
 		 (long long)(cli->id_client), c->args.cmd_oper.name);
 	srv_log(srv, msg);
+
+	srv_free(&msg);
 }
 
 static void srv_whowas_cb(void *whowas_, void *args_)
@@ -1875,7 +1929,7 @@ static void srv_whowas_cb(void *whowas_, void *args_)
 
 static void srv_process_whowas(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char lnick[MESSAGE_BUFFER_SIZE];
+	char *lnick = srv_malloc_msg();
 	int i;
 	const char *nick;
 	struct srv_whowas_cb_args args;
@@ -1898,6 +1952,8 @@ static void srv_process_whowas(struct server *srv, struct db_client *cli, struct
 		srv_fmt_enq(srv, cli, ":%s %03d %s %s :End of WHOWAS\r\n",
 			    srv->config.server_name, RPL_ENDOFWHOWAS, srv_dest_nick(cli), nick);
 	}
+
+	srv_free(&lnick);
 }
 
 static void srv_whois_cb(void *chan_, void *args_)
@@ -1931,7 +1987,7 @@ static void srv_whois_cb(void *chan_, void *args_)
 
 static void srv_process_whois(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char lnick[MESSAGE_BUFFER_SIZE];
+	char *lnick = srv_malloc_msg();
 	struct db_client wn;
 	const char *nick;
 	int i;
@@ -1998,18 +2054,20 @@ static void srv_process_whois(struct server *srv, struct db_client *cli, struct 
 		    ":%s %03d %s %s :End of WHOIS list\r\n",
 		    srv->config.server_name, RPL_ENDOFWHOIS,
 		    srv_dest_nick(cli), c->args.cmd_whois.orig_query);
+
+	srv_free(&lnick);
 }
 
 static void srv_process_kill(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char lnick[MESSAGE_BUFFER_SIZE];
+	char *lnick = srv_malloc_msg();
+	char *msg = srv_malloc_msg();
 	struct db_client killed;
 
-	char msg[MESSAGE_BUFFER_SIZE];
 
 	if (! cli->operator_flag && ! cli->local_operator_flag) {
 		srv_send_error_noprivileges(srv, cli);
-		return;
+		goto out;
 	}
 
 	strcpy(lnick, c->args.cmd_kill.nickname);
@@ -2017,7 +2075,7 @@ static void srv_process_kill(struct server *srv, struct db_client *cli, struct c
 
 	if (db_get_client_by_nick(srv->db, lnick, &killed) != 0) {
 		srv_send_error_nosuchnick(srv, cli, c->args.cmd_kill.nickname);
-		return;
+		goto out;
 	}
 
 	/* Add the nick to the list of forbidden nicks for some time. */
@@ -2027,6 +2085,10 @@ static void srv_process_kill(struct server *srv, struct db_client *cli, struct c
 	srv_fmt(msg, MESSAGE_BUFFER_SIZE, "Killed: %s",
 		(c->args.cmd_kill.comment[0] != '\0')?c->args.cmd_kill.comment:"<no reason given>");
 	srv_client_quit(srv, &killed, msg);
+
+out:
+	srv_free(&lnick);
+	srv_free(&msg);
 }
 
 static void srv_report_cmd_stats(struct server *srv, struct db_client *cli)
@@ -2155,7 +2217,7 @@ static void srv_one_names_cb(void *cli_, void *args_)
 
 static void srv_process_one_names(struct server *srv, struct db_client *cli, struct db_channel *chan, int all)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
 	struct srv_one_names_cb_args args;
@@ -2182,15 +2244,16 @@ static void srv_process_one_names(struct server *srv, struct db_client *cli, str
 	}
 
 	srv_send_reply_endofnames(srv, cli, chan->orig_name);
+	srv_free(&msg);
 }
 
 static void srv_process_one_join(struct server *srv, struct db_client *cli, const char *cname, const char *key)
 {
 	struct srv_enqueue_cb_args args;
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
-	char lchan[MESSAGE_BUFFER_SIZE];
+	char *lchan = srv_malloc_msg();
 	struct db_channel chan;
 	struct db_membership memb;
 	int ret;
@@ -2200,7 +2263,7 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 
 	if (db_count_client_channels(srv->db, cli->id_client) >= srv->config.max_client_channels) {
 		srv_send_error_toomanychannels(srv, cli, cname);
-		return;
+		goto out;
 	}
 
 	if (db_get_channel_by_name(srv->db, lchan, &chan) != 0) {
@@ -2208,7 +2271,7 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 
 		if (db_count_channels(srv->db) >= srv->config.max_channels) {
 			srv_send_error_unavailresource(srv, cli, cname);
-			return;
+			goto out;
 		}
 
 		memset(&chan, 0, sizeof(chan));
@@ -2233,23 +2296,23 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 		if (db_count_channel_members(srv->db, chan.id_channel) >=
 		    srv->config.max_channel_members) {
 			srv_send_error_unavailresource(srv, cli, cname);
-			return;
+			goto out;
 		}
 
 		ret = db_client_may_join(srv->db, cli, &chan, key);
 		switch(ret) {
 		case ERR_BADCHANNELKEY:
 			srv_send_error_badchannelkey(srv, cli, cname);
-			return;
+			goto out;
 		case ERR_CHANNELISFULL:
 			srv_send_error_channelisfull(srv, cli, cname);
-			return;
+			goto out;
 		case ERR_INVITEONLYCHAN:
 			srv_send_error_inviteonlychan(srv, cli, cname);
-			return;
+			goto out;
 		case ERR_BANNEDFROMCHAN:
 			srv_send_error_bannedfromchan(srv, cli, cname);
-			return;
+			goto out;
 		case ERR_NOPRIVILEGES:
 			/*
 			 * According to the RFC, this is not one of the allowed
@@ -2257,10 +2320,10 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 			 * is a specific feature for this server.
 			 */
 			srv_send_error_noprivileges(srv, cli);
-			return;
+			goto out;
 		case -1:
 			/* Client is already on the channel. */
-			return;
+			goto out;
 		default:
 			break;
 		}
@@ -2291,6 +2354,10 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 	snprintf(msg, MESSAGE_BUFFER_SIZE, "CLID_%lld joins channel %s",
 		 (long long)(cli->id_client), chan.name);
 	srv_log(srv, msg);
+
+out:
+	srv_free(&msg);
+	srv_free(&lchan);
 }
 
 static void srv_join_zero_cb(void *chan_, void *args_)
@@ -2326,10 +2393,10 @@ static void srv_process_join(struct server *srv, struct db_client *cli, struct c
 static void srv_process_topic(struct server *srv, struct db_client *cli, struct command *c)
 {
 	struct srv_enqueue_cb_args args;
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
 	int len;
 
-	char lchan[MESSAGE_BUFFER_SIZE];
+	char *lchan = srv_malloc_msg();
 	struct db_channel chan;
 	struct db_membership m;
 
@@ -2338,16 +2405,16 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 
 	if (db_get_channel_by_name(srv->db, lchan, &chan) != 0 || chan.secret_flag) {
 		srv_send_error_notonchannel(srv, cli, c->args.cmd_topic.channel);
-		return;
+		goto out;
 	}
 	
 	if (c->args.cmd_topic.topic_given) {
 		if (db_get_membership(srv->db, chan.id_channel, cli->id_client, &m) != 0) {
 			srv_send_error_notonchannel(srv, cli, c->args.cmd_topic.channel);
-			return;
+			goto out;
 		} else if (chan.oper_topic_flag && !m.operator_flag) {
 			srv_send_error_chanoprivsneeded(srv, cli, c->args.cmd_topic.channel);
-			return;
+			goto out;
 		}
 
 		strcpy(chan.topic, c->args.cmd_topic.topic);
@@ -2366,13 +2433,17 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 		srv_send_reply_topic(srv, cli, chan.orig_name, chan.topic);
 	else
 		srv_send_reply_notopic(srv, cli, chan.orig_name);
+
+out:
+	srv_free(&msg);
+	srv_free(&lchan);
 }
 
 static void srv_process_names(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char lchan[MESSAGE_BUFFER_SIZE];
 	struct db_channel chan;
 	struct db_membership m;
+	char *lchan;
 	int all;
 	int i;
 
@@ -2389,6 +2460,7 @@ static void srv_process_names(struct server *srv, struct db_client *cli, struct 
 		return;
 	}
 
+	lchan = srv_malloc_msg();
 	for (i = 0; i < c->args.cmd_names_list.num_channels; ++i) {
 		strcpy(lchan, c->args.cmd_names_list.channels[i]);
 		irclower(lchan);
@@ -2401,6 +2473,7 @@ static void srv_process_names(struct server *srv, struct db_client *cli, struct 
 		} else
 			srv_send_reply_endofnames(srv, cli, c->args.cmd_names_list.channels[i]);
 	}
+	srv_free(&lchan);
 }
 
 static void srv_process_list(struct server *srv, struct db_client *cli, struct command *c)
@@ -2447,7 +2520,7 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 	struct db_channel chan;
 	struct db_membership m;
 
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg;
 	int len;
 	struct srv_enqueue_cb_args args;
 
@@ -2465,6 +2538,7 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 	}
 
 	assert(db_delete_membership(srv->db, chan.id_channel, cli->id_client) == 0);
+	msg = srv_malloc_msg();
 
 	/* Log channel part. */
 	snprintf(msg, MESSAGE_BUFFER_SIZE, "CLID_%lld leaves channel %s",
@@ -2476,13 +2550,14 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 	srv_enqueue_client_data(srv, cli, msg, len);
 
 	/* Do not send PART messages to quiet channels. */
-	if (chan.quiet_flag)
-		return;
+	if (! chan.quiet_flag) {
+		args.srv = srv;
+		args.msg = msg;
+		args.len = len;
+		assert(db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args) == 0);
+	}
 
-	args.srv = srv;
-	args.msg = msg;
-	args.len = len;
-	assert(db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args) == 0);
+	srv_free(&msg);
 }
 
 static void srv_process_part(struct server *srv, struct db_client *cli, struct command *c)
@@ -2498,7 +2573,7 @@ static void srv_process_part(struct server *srv, struct db_client *cli, struct c
 
 static void srv_process_one_kick(struct server *srv, struct db_client *cli, const char *n, const char *c, const char *r)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
+	char *msg;
 	int len;
 
 	struct db_channel chan;
@@ -2537,6 +2612,8 @@ static void srv_process_one_kick(struct server *srv, struct db_client *cli, cons
 		return;
 	}
 
+	msg = srv_malloc_msg();
+
 	/* Log kick. */
 	srv_fmt(msg, MESSAGE_BUFFER_SIZE, "CLID_%lld kicked CLID_%lld out of %s",
 		(long long)(cli->id_client), (long long)(kicked.id_client), chan.name);
@@ -2551,6 +2628,8 @@ static void srv_process_one_kick(struct server *srv, struct db_client *cli, cons
 	args.len = len;
 	assert(db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args) == 0);
 	assert(db_delete_membership(srv->db, chan.id_channel, kicked.id_client) == 0);
+
+	srv_free(&msg);
 }
 
 static void srv_process_kick(struct server *srv, struct db_client *cli, struct command *c)
@@ -2942,16 +3021,16 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 {
 	static struct tokens t;
 	static struct command c;
-	char message[MESSAGE_BUFFER_SIZE];
 	struct db_client cli;
 	struct server *srv;
+	char *message = srv_malloc_msg();
 	int ret;
 
 	srv = srv_;
 
 	/* This should never happen anyway. */
 	if (msglen <= 0 || msglen > MAX_MESSAGE_LEN)
-		return;
+		goto out;
 	
 	memcpy(message, msg, msglen);
 	message[msglen] = '\0';
@@ -2959,13 +3038,13 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 	init_tokens(&t);
 	if (tokenize(message, &t) <= 0)
 		/* Erroneous message by lexer. */
-		return;
+		goto out;
 
 	init_command(&c);
 	ret = parse_tokens(&t, &c);
 	if (ret < 0)
 		/* Erroneous message by parser. */
-		return;
+		goto out;
 
 	/* Increase STATS counters. */
 	if (c.number >= CMD_BASE_NUMBER && c.number < CMD_TOP_NUMBER) {
@@ -2989,6 +3068,9 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 	/* Penalize client. */
 	cli.last_activity += CLIENT_PENALIZATION;
 	assert(db_modify_client(srv->db, &cli) == 0);
+
+out:
+	srv_free(&message);
 }
 
 void srv_init(struct server *srv, const struct server_config *config)
@@ -3186,7 +3268,7 @@ static void srv_anon_neighbor_cb(void *cc_, void *args_)
 static void srv_client_quit(struct server *srv, struct db_client *cli, const char *reason)
 {
 	int len;
-	char quit_msg[MESSAGE_BUFFER_SIZE];
+	char *quit_msg = srv_malloc_msg();
 	struct srv_enqueue_cb_args cb_args;
 	struct srv_anon_neighbor_cb_args anon_args;
 
@@ -3217,6 +3299,7 @@ static void srv_client_quit(struct server *srv, struct db_client *cli, const cha
 	srv_log(srv, quit_msg);
 
 	srv_disconnect_client(srv, cli);
+	srv_free(&quit_msg);
 }
 
 static void srv_enqueue_client_data(struct server *srv, struct db_client *cli, const char *in, int len)
@@ -3374,8 +3457,8 @@ static void srv_poll_sockets(struct server *srv)
 
 static void srv_accept_new_clients(struct server *srv)
 {
-	char msg[MESSAGE_BUFFER_SIZE];
-	char ipstr[MESSAGE_BUFFER_SIZE];
+	char *msg = srv_malloc_msg();
+	char *ipstr = srv_malloc_msg();
 	struct db_client cli;
 	socklen_t addrlen;
 	int fd;
@@ -3426,6 +3509,9 @@ static void srv_accept_new_clients(struct server *srv)
 			 (long long)(cli.id_client), ipstr, port, fd);
 		srv_log(srv, msg);
 	}
+
+	srv_free(&msg);
+	srv_free(&ipstr);
 }
 
 static void srv_poll_cb(void *cli_, void *srv_)
@@ -3675,9 +3761,9 @@ void srv_parse_config(FILE *f, struct server_config *cfg)
 	int keylen;
 	int valuelen;
 
-	char line[MESSAGE_BUFFER_SIZE];
-	char key[MESSAGE_BUFFER_SIZE];
-	char value[MESSAGE_BUFFER_SIZE];
+	char *line = srv_malloc_msg();
+	char *key = srv_malloc_msg();
+	char *value = srv_malloc_msg();
 
 	/* Set some sane default values. */
 	strcpy(cfg->server_name, DEFAULT_SERVER_NAME);
@@ -3759,6 +3845,9 @@ void srv_parse_config(FILE *f, struct server_config *cfg)
 		((cfg->max_clients < cfg->max_channel_members)?
 		 cfg->max_clients:cfg->max_channel_members);
 
+	srv_free(&line);
+	srv_free(&key);
+	srv_free(&value);
 }
 
 static void srv_load_operators(FILE *f, sqlite3 *db)
@@ -3769,7 +3858,7 @@ static void srv_load_operators(FILE *f, sqlite3 *db)
 	int passlen;
 
 	struct db_operator op;
-	char line[MESSAGE_BUFFER_SIZE];
+	char *line = srv_malloc_msg();
 
 	lineno = 0;
 	while (! (feof(f) || ferror(f))) {
@@ -3834,6 +3923,8 @@ static void srv_load_operators(FILE *f, sqlite3 *db)
 			exit(EXIT_FAILURE);
 		}
 	}
+
+	srv_free(&line);
 }
 
 static int srv_op_user_pass_verify(const char *str)

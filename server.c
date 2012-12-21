@@ -697,6 +697,7 @@ static void srv_rebuild_cli_fullname(struct server *srv, struct db_client *cli)
 	snprintf(aux, MESSAGE_BUFFER_SIZE, "CLID_%lld is now %s",
 		 (long long)(cli->id_client), cli->fullname);
 	srv_log(srv, aux);
+
 	srv_free(&aux);
 }
 
@@ -958,7 +959,7 @@ static void srv_process_notice(struct server *srv, struct db_client *cli, struct
 		irclower(lc);
 
 		if (db_get_client_by_nick(srv->db, lc, &tcli) != 0)
-			return;
+			goto out;
 
 		len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s NOTICE %s :%s\r\n",
 			      cli->orig_fullname, tcli.orig_nickname, c->args.cmd_notice.text);
@@ -969,10 +970,10 @@ static void srv_process_notice(struct server *srv, struct db_client *cli, struct
 	case TYPE_CHAN:
 		chan = c->args.cmd_notice.target.channel;
 		if (db_get_channel_by_name(srv->db, chan, &tchan) != 0)
-			return;
+			goto out;
 
 		if (!db_client_may_talk(srv->db, cli, &tchan))
-			return;
+			goto out;
 
 		origin = (tchan.anonymous_flag)?"anonymous!anonymous@anonymous":cli->orig_fullname;
 		len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s NOTICE %s :%s\r\n",
@@ -984,6 +985,7 @@ static void srv_process_notice(struct server *srv, struct db_client *cli, struct
 		break;
 	}
 
+out:
 	srv_free(&msg);
 }
 
@@ -1040,8 +1042,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 
 		if (strcmp(lnick, cli->nickname) != 0) {
 			srv_send_error_usersdontmatch(srv, cli);
-			srv_free(&msg);
-			return;
+			goto out;
 		}
 
 		p = &(c->args.cmd_mode.mode_args.type_nick);
@@ -1520,6 +1521,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 		}
 		break;
 	}
+
+out:
 	srv_free(&msg);
 }
 
@@ -1835,6 +1838,7 @@ static void srv_process_userhost(struct server *srv, struct db_client *cli, stru
 		msg[MESSAGE_BUFFER_SIZE - 3] = '\r';
 		srv_enqueue_client_data(srv, cli, msg, len);
 	}
+
 	srv_free(&msg);
 }
 
@@ -1896,8 +1900,7 @@ static void srv_process_oper(struct server *srv, struct db_client *cli, struct c
 			 (long long)(cli->id_client), c->args.cmd_oper.name);
 		srv_log(srv, msg);
 
-		srv_free(&msg);
-		return;
+		goto out;
 	}
 
 	cli->id_oper = id_oper;
@@ -1909,6 +1912,7 @@ static void srv_process_oper(struct server *srv, struct db_client *cli, struct c
 		 (long long)(cli->id_client), c->args.cmd_oper.name);
 	srv_log(srv, msg);
 
+out:
 	srv_free(&msg);
 }
 

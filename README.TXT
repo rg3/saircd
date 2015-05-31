@@ -336,5 +336,5 @@ along with saircd.  If not, see <http://www.gnu.org/licenses/>.
 
 8. Contact information
 
-Ricardo Garcia <public@rg3.name>
+Ricardo Garcia <r@rg3.name>
 

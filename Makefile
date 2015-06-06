@@ -97,4 +97,7 @@ main.o: main.c messages.h database.h buffer.h reader.h server.h
 	$(CC) $(CFLAGS) -c main.c
 
 build.h: build.h.in
-	sed -e "s!@@UNAME@@!`uname -mnsrv`!" -e "s!@@DATE@@!`env -i LANG=C date -u`!" build.h.in >build.h
+	sed \
+		-e "s!@@UNAME@@!`uname -mnsrv`!" \
+		-e "s!@@DATE@@!`env -i LANG=C date -u`!" \
+		build.h.in >build.h

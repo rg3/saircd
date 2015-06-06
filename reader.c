@@ -37,6 +37,7 @@ int read_and_callback(struct reader *rdr, void *arg)
 	ssize_t i;
 	char *cur;
 	int msglen;
+	int iret;
 
 	cur = rdr->buf->data + rdr->buf->used;
 
@@ -49,7 +50,8 @@ int read_and_callback(struct reader *rdr, void *arg)
 	if (ret == 0 || ret == -1)
 		return ret;
 
-	assert(buffer_append(rdr->buf, cur, ret) == 0);
+	iret = buffer_append(rdr->buf, cur, ret);
+	assert(iret == 0);
 
 	/* Process each read character and update internal state. */
 	for (i = 0; i < ret; ++i) {

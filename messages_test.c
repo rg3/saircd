@@ -355,9 +355,12 @@ void test_18tokens(void)
 
 void test_parse_unknowncmd(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("FOO\r\n", &t) >= 0);
+	ret = tokenize("FOO\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_UNKNOWNCOMMAND) {
 		printf("Uknown command parsed without ERR_UNKNOWNCOMMAND\n");
 		++tests_failed;
@@ -368,9 +371,12 @@ void test_parse_unknowncmd(void)
 
 void test_parse_ison(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON foo\r\n", &t) >= 0);
+	ret = tokenize("ISON foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != 0) {
 		printf("Correct ISON line failed to parse\n");
 		++tests_failed;
@@ -387,9 +393,12 @@ void test_parse_ison(void)
 
 void test_parse_toomanyargs(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16\r\n", &t) >= 0);
+	ret = tokenize("ISON n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Command with too many arguments parsed without failure\n");
 		++tests_failed;
@@ -400,9 +409,12 @@ void test_parse_toomanyargs(void)
 
 void test_parse_15args(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 \r\n", &t) >= 0);
+	ret = tokenize("ISON n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 \r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != 0) {
 		printf("Correct ISON line failed to parse\n");
 		++tests_failed;
@@ -433,9 +445,12 @@ void test_parse_15args(void)
 
 void test_parse_prefix15args(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize(":foo ISON n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 \r\n", &t) >= 0);
+	ret = tokenize(":foo ISON n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 \r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != 0) {
 		printf("Correct ISON line failed to parse\n");
 		++tests_failed;
@@ -466,9 +481,12 @@ void test_parse_prefix15args(void)
 
 void test_parse_passnopass(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PASS\r\n", &t) >= 0);
+	ret = tokenize("PASS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("PASS command with no arguments passed without failure\n");
 		++tests_failed;
@@ -479,9 +497,12 @@ void test_parse_passnopass(void)
 
 void test_parse_passwithpassword(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PASS 2842ccamfsal%%[]á\r\n", &t) >= 0);
+	ret = tokenize("PASS 2842ccamfsal%%[]á\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 		   strlen(c.prefix) == 0 &&
 		   c.number == CMD_PASS &&
@@ -495,9 +516,12 @@ void test_parse_passwithpassword(void)
 
 void test_parse_passignoreextra(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PASS password foo\r\n", &t) >= 0);
+	ret = tokenize("PASS password foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 		   strlen(c.prefix) == 0 &&
 		   c.number == CMD_PASS &&
@@ -511,9 +535,12 @@ void test_parse_passignoreextra(void)
 
 void test_parse_nicknonick(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK\r\n", &t) >= 0);
+	ret = tokenize("NICK\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NONICKNAMEGIVEN) {
 		printf("NICK command with no nickname failed to return proper error\n");
 		++tests_failed;
@@ -524,9 +551,12 @@ void test_parse_nicknonick(void)
 
 void test_parse_nickdigit(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK 1foo\r\n", &t) >= 0);
+	ret = tokenize("NICK 1foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_ERRONEUSNICKNAME) {
 		printf("NICK command with leading digit in nickname failed to return proper error\n");
 		++tests_failed;
@@ -537,9 +567,12 @@ void test_parse_nickdigit(void)
 
 void test_parse_nickdash(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK -foo\r\n", &t) >= 0);
+	ret = tokenize("NICK -foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_ERRONEUSNICKNAME) {
 		printf("NICK command with leading dash in nickname failed to return proper error\n");
 		++tests_failed;
@@ -550,9 +583,12 @@ void test_parse_nickdash(void)
 
 void test_parse_nickpercent(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK foo%\r\n", &t) >= 0);
+	ret = tokenize("NICK foo%\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_ERRONEUSNICKNAME) {
 		printf("NICK command with percent symbol in nickname failed to return proper error\n");
 		++tests_failed;
@@ -563,9 +599,12 @@ void test_parse_nickpercent(void)
 
 void test_parse_nicktoolong(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK foo222333a\r\n", &t) >= 0);
+	ret = tokenize("NICK foo222333a\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_ERRONEUSNICKNAME) {
 		printf("NICK command with too long nickname failed to return proper error\n");
 		++tests_failed;
@@ -576,9 +615,12 @@ void test_parse_nicktoolong(void)
 
 void test_parse_propernick1(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK a1[]\\`_^-\r\n", &t) >= 0);
+	ret = tokenize("NICK a1[]\\`_^-\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_NICK &&
@@ -592,9 +634,12 @@ void test_parse_propernick1(void)
 
 void test_parse_propernick2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK [z{|}]-\r\n", &t) >= 0);
+	ret = tokenize("NICK [z{|}]-\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_NICK &&
@@ -608,9 +653,12 @@ void test_parse_propernick2(void)
 
 void test_parse_singlecharnick(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NICK a\r\n", &t) >= 0);
+	ret = tokenize("NICK a\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_NICK &&
@@ -624,9 +672,12 @@ void test_parse_singlecharnick(void)
 
 void test_parse_userneedmoreparams(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USER foo 1 *\r\n", &t) >= 0);
+	ret = tokenize("USER foo 1 *\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("USER command with too few arguments did not return proper error\n");
 		++tests_failed;
@@ -637,9 +688,12 @@ void test_parse_userneedmoreparams(void)
 
 void test_parse_userinvaliduser(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USER foo! 1 * :Bar Baz\r\n", &t) >= 0);
+	ret = tokenize("USER foo! 1 * :Bar Baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("USER command with invalid user did not return proper error\n");
 		++tests_failed;
@@ -650,9 +704,12 @@ void test_parse_userinvaliduser(void)
 
 void test_parse_userinvalidmode1(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USER foo T * :Bar Baz\r\n", &t) >= 0);
+	ret = tokenize("USER foo T * :Bar Baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_USER &&
@@ -668,9 +725,12 @@ void test_parse_userinvalidmode1(void)
 
 void test_parse_userinvalidmode2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USER foo 1T * :Bar Baz\r\n", &t) >= 0);
+	ret = tokenize("USER foo 1T * :Bar Baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_USER &&
@@ -686,9 +746,12 @@ void test_parse_userinvalidmode2(void)
 
 void test_parse_usercommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USER foo 4 * :Bar Baz\r\n", &t) >= 0);
+	ret = tokenize("USER foo 4 * :Bar Baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_USER &&
@@ -704,9 +767,12 @@ void test_parse_usercommand(void)
 
 void test_parse_invalidoper1(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("OPER\r\n", &t) >= 0);
+	ret = tokenize("OPER\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Invalid OPER command (1) failed to return proper error\n");
 		++tests_failed;
@@ -717,9 +783,12 @@ void test_parse_invalidoper1(void)
 
 void test_parse_invalidoper2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("OPER foo\r\n", &t) >= 0);
+	ret = tokenize("OPER foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Invalid OPER command (2) failed to return proper error\n");
 		++tests_failed;
@@ -730,9 +799,12 @@ void test_parse_invalidoper2(void)
 
 void test_parse_opercommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("OPER foo bar\r\n", &t) >= 0);
+	ret = tokenize("OPER foo bar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_OPER &&
@@ -747,9 +819,12 @@ void test_parse_opercommand(void)
 
 void test_parse_modeargs(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE\r\n", &t) >= 0);
+	ret = tokenize("MODE\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("MODE command with no arguments failed to return proper error\n");
 		++tests_failed;
@@ -760,9 +835,12 @@ void test_parse_modeargs(void)
 
 void test_parse_modetarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE =foo=\r\n", &t) >= 0);
+	ret = tokenize("MODE =foo=\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("MODE command with invalid target failed to return proper error\n");
 		++tests_failed;
@@ -773,9 +851,12 @@ void test_parse_modetarget(void)
 
 void test_parse_umode(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE foo\r\n", &t) >= 0);
+	ret = tokenize("MODE foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_MODE &&
@@ -797,9 +878,12 @@ void test_parse_umode(void)
 
 void test_parse_umodeargs(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE foo -a+i-w+r-o+O-s\r\n", &t) >= 0);
+	ret = tokenize("MODE foo -a+i-w+r-o+O-s\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_MODE &&
@@ -821,9 +905,12 @@ void test_parse_umodeargs(void)
 
 void test_parse_serviceneedmoreparams(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SERVICE foo * * bar *\r\n", &t) >= 0);
+	ret = tokenize("SERVICE foo * * bar *\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("SERVICE command lacking arguments failed to return proper error\n");
 		++tests_failed;
@@ -834,9 +921,12 @@ void test_parse_serviceneedmoreparams(void)
 
 void test_parse_serviceinvalidnick(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SERVICE 1foo * * bar * baz\r\n", &t) >= 0);
+	ret = tokenize("SERVICE 1foo * * bar * baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_ERRONEUSNICKNAME) {
 		printf("SERVICE command with bad nickname failed to return proper error\n");
 		++tests_failed;
@@ -847,9 +937,12 @@ void test_parse_serviceinvalidnick(void)
 
 void test_parse_servicecommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SERVICE foo * * bar * baz\r\n", &t) >= 0);
+	ret = tokenize("SERVICE foo * * bar * baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_SERVICE &&
@@ -866,9 +959,12 @@ void test_parse_servicecommand(void)
 
 void test_parse_emptyquit(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("QUIT\r\n", &t) >= 0);
+	ret = tokenize("QUIT\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_QUIT &&
@@ -882,9 +978,12 @@ void test_parse_emptyquit(void)
 
 void test_parse_singlewordquit(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("QUIT foo :bar baz etcetera\r\n", &t) >= 0);
+	ret = tokenize("QUIT foo :bar baz etcetera\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_QUIT &&
@@ -898,9 +997,12 @@ void test_parse_singlewordquit(void)
 
 void test_parse_multiwordquit(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("QUIT :foo bar baz \r\n", &t) >= 0);
+	ret = tokenize("QUIT :foo bar baz \r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_QUIT &&
@@ -914,9 +1016,12 @@ void test_parse_multiwordquit(void)
 
 void test_parse_squitbad(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SQUIT foo\r\n", &t) >= 0);
+	ret = tokenize("SQUIT foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("SQUIT command with too few arguments failed to return proper error\n");
 		++tests_failed;
@@ -927,9 +1032,12 @@ void test_parse_squitbad(void)
 
 void test_parse_squitcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SQUIT server.example.com :Server out of control\r\n", &t) >= 0);
+	ret = tokenize("SQUIT server.example.com :Server out of control\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_SQUIT &&
@@ -944,9 +1052,12 @@ void test_parse_squitcommand(void)
 
 void test_parse_emptyjoin(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN\r\n", &t) >= 0);
+	ret = tokenize("JOIN\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("JOIN command with too few arguments failed to return proper error\n");
 		++tests_failed;
@@ -957,9 +1068,12 @@ void test_parse_emptyjoin(void)
 
 void test_parse_joinzero(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN 0\r\n", &t) >= 0);
+	ret = tokenize("JOIN 0\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_JOIN &&
@@ -975,9 +1089,12 @@ void test_parse_joinzero(void)
 
 void test_parse_joinzerowithkey(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN 0 key\r\n", &t) >= 0);
+	ret = tokenize("JOIN 0 key\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("JOIN 0 command with key failed to return proper error\n");
 		++tests_failed;
@@ -988,9 +1105,12 @@ void test_parse_joinzerowithkey(void)
 
 void test_parse_joinzerointhemiddle(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN #foo,0,#bar\r\n", &t) >= 0);
+	ret = tokenize("JOIN #foo,0,#bar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("JOIN command with 0 in the middle failed to return proper error\n");
 		++tests_failed;
@@ -1001,9 +1121,12 @@ void test_parse_joinzerointhemiddle(void)
 
 void test_parse_jointoomanytargets(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN #one,#two,#three,#four,#five,#six,#seven,#eigth,#nine\r\n", &t) >= 0);
+	ret = tokenize("JOIN #one,#two,#three,#four,#five,#six,#seven,#eigth,#nine\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_TOOMANYTARGETS) {
 		printf("JOIN command with too many targets failed to return proper error\n");
 		++tests_failed;
@@ -1014,9 +1137,12 @@ void test_parse_jointoomanytargets(void)
 
 void test_parse_joineighttargets(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN #one,#two,#three,#four,#five,#six,#seven,#eight key\r\n", &t) >= 0);
+	ret = tokenize("JOIN #one,#two,#three,#four,#five,#six,#seven,#eight key\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_JOIN &&
@@ -1040,9 +1166,12 @@ void test_parse_joineighttargets(void)
 
 void test_parse_jointoomanykeys(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN #foo 1,2,3,4,5,6,7,8,9\r\n", &t) >= 0);
+	ret = tokenize("JOIN #foo 1,2,3,4,5,6,7,8,9\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_TOOMANYTARGETS) {
 		printf("JOIN command with too many keys failed to return proper error\n");
 		++tests_failed;
@@ -1053,9 +1182,12 @@ void test_parse_jointoomanykeys(void)
 
 void test_parse_joineigthkeys(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN #foo 1,2,3,4,5,6,7,8\r\n", &t) >= 0);
+	ret = tokenize("JOIN #foo 1,2,3,4,5,6,7,8\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_JOIN &&
@@ -1079,9 +1211,12 @@ void test_parse_joineigthkeys(void)
 
 void test_parse_joinkey(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("JOIN key\r\n", &t) >= 0);
+	ret = tokenize("JOIN key\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("JOIN command with no channels and a key failed to return proper error\n");
 		++tests_failed;
@@ -1092,9 +1227,12 @@ void test_parse_joinkey(void)
 
 void test_parse_partempty(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PART\r\n", &t) >= 0);
+	ret = tokenize("PART\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Empty PART command failed to return proper error\n");
 		++tests_failed;
@@ -1105,9 +1243,12 @@ void test_parse_partempty(void)
 
 void test_parse_partinvalid(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PART foo\r\n", &t) >= 0);
+	ret = tokenize("PART foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Invalid PART command failed to return proper error\n");
 		++tests_failed;
@@ -1118,9 +1259,12 @@ void test_parse_partinvalid(void)
 
 void test_parse_partsingle(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PART #foo\r\n", &t) >= 0);
+	ret = tokenize("PART #foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_PART &&
@@ -1136,9 +1280,12 @@ void test_parse_partsingle(void)
 
 void test_parse_partmultiwithreason(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PART #foo,,#bar :Baz reason\r\n", &t) >= 0);
+	ret = tokenize("PART #foo,,#bar :Baz reason\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_PART &&
@@ -1155,9 +1302,12 @@ void test_parse_partmultiwithreason(void)
 
 void test_parse_partemptyweirdlist(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PART ,,,\r\n", &t) >= 0);
+	ret = tokenize("PART ,,,\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Invalid PART command failed to return proper error\n");
 		++tests_failed;
@@ -1168,9 +1318,12 @@ void test_parse_partemptyweirdlist(void)
 
 void test_parse_topicempty(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TOPIC\r\n", &t) >= 0);
+	ret = tokenize("TOPIC\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Invalid TOPIC command failed to return proper error\n");
 		++tests_failed;
@@ -1181,9 +1334,12 @@ void test_parse_topicempty(void)
 
 void test_parse_topiclongchanname(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TOPIC #thenameofthischannelistoolongtobeparsedproperly123\r\n", &t) >= 0);
+	ret = tokenize("TOPIC #thenameofthischannelistoolongtobeparsedproperly123\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_TOPIC &&
@@ -1199,9 +1355,12 @@ void test_parse_topiclongchanname(void)
 
 void test_parse_topicmaxchanlength(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TOPIC #the_name_of_this_channel_is_fifty_chars_long_____\r\n", &t) >= 0);
+	ret = tokenize("TOPIC #the_name_of_this_channel_is_fifty_chars_long_____\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_TOPIC &&
@@ -1217,9 +1376,12 @@ void test_parse_topicmaxchanlength(void)
 
 void test_parse_topicwithtopic(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TOPIC #foo :This is the new channel topic!\r\n", &t) >= 0);
+	ret = tokenize("TOPIC #foo :This is the new channel topic!\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_TOPIC &&
@@ -1235,9 +1397,12 @@ void test_parse_topicwithtopic(void)
 
 void test_parse_topicemptytopic(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TOPIC #foo :\r\n", &t) >= 0);
+	ret = tokenize("TOPIC #foo :\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_TOPIC &&
@@ -1253,9 +1418,12 @@ void test_parse_topicemptytopic(void)
 
 void test_parse_namesonechannel(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NAMES #foo server.example.com\r\n", &t) >= 0);
+	ret = tokenize("NAMES #foo server.example.com\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_NAMES &&
@@ -1271,9 +1439,12 @@ void test_parse_namesonechannel(void)
 
 void test_parse_namesseveralchannels(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NAMES #foo,#bar,#baz :Target Server\r\n", &t) >= 0);
+	ret = tokenize("NAMES #foo,#bar,#baz :Target Server\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_NAMES &&
@@ -1291,9 +1462,12 @@ void test_parse_namesseveralchannels(void)
 
 void test_parse_namestoomanychans(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NAMES #a,#b,#c,#d,#e,#f,#g,#h,#i\r\n", &t) >= 0);
+	ret = tokenize("NAMES #a,#b,#c,#d,#e,#f,#g,#h,#i\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect NAMES command with too many channels failed to return proper error\n");
 		++tests_failed;
@@ -1304,9 +1478,12 @@ void test_parse_namestoomanychans(void)
 
 void test_parse_listonechannel(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LIST #foo server.example.com\r\n", &t) >= 0);
+	ret = tokenize("LIST #foo server.example.com\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_LIST &&
@@ -1322,9 +1499,12 @@ void test_parse_listonechannel(void)
 
 void test_parse_listseveralchannels(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LIST #foo,#bar,#baz :Target Server\r\n", &t) >= 0);
+	ret = tokenize("LIST #foo,#bar,#baz :Target Server\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_LIST &&
@@ -1342,9 +1522,12 @@ void test_parse_listseveralchannels(void)
 
 void test_parse_listtoomanychans(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LIST #a,#b,#c,#d,#e,#f,#g,#h,#i\r\n", &t) >= 0);
+	ret = tokenize("LIST #a,#b,#c,#d,#e,#f,#g,#h,#i\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect LIST command with too many channels failed to return proper error\n");
 		++tests_failed;
@@ -1355,9 +1538,12 @@ void test_parse_listtoomanychans(void)
 
 void test_parse_invitenoargs(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INVITE\r\n", &t) >= 0);
+	ret = tokenize("INVITE\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect INVITE command with no arguments failed to return proper error\n");
 		++tests_failed;
@@ -1368,9 +1554,12 @@ void test_parse_invitenoargs(void)
 
 void test_parse_invitenickonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INVITE john\r\n", &t) >= 0);
+	ret = tokenize("INVITE john\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect INVITE command with nickname only failed to return proper error\n");
 		++tests_failed;
@@ -1381,9 +1570,12 @@ void test_parse_invitenickonly(void)
 
 void test_parse_invitebadnick(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INVITE 123abc #foo\r\n", &t) >= 0);
+	ret = tokenize("INVITE 123abc #foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NOSUCHNICK) {
 		printf("Incorrect INVITE command with bad nickname failed to return proper error\n");
 		++tests_failed;
@@ -1394,9 +1586,12 @@ void test_parse_invitebadnick(void)
 
 void test_parse_invitebadchan(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INVITE lucy #\r\n", &t) >= 0);
+	ret = tokenize("INVITE lucy #\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect INVITE command with bad channel name failed to return proper error\n");
 		++tests_failed;
@@ -1407,9 +1602,12 @@ void test_parse_invitebadchan(void)
 
 void test_parse_invitecommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INVITE anaku #java\r\n", &t) >= 0); /* Good ol' times. */
+	ret = tokenize("INVITE anaku #java\r\n", &t); /* Good ol' times. */
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_INVITE &&
@@ -1424,9 +1622,12 @@ void test_parse_invitecommand(void)
 
 void test_parse_kickoneone(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KICK #channel nickname :Stop spamming!\r\n", &t) >= 0);
+	ret = tokenize("KICK #channel nickname :Stop spamming!\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_KICK &&
@@ -1444,9 +1645,12 @@ void test_parse_kickoneone(void)
 
 void test_parse_kickmultiple(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KICK #a,#b,#c,#d,#e,#f,#g,#h a,b,c,d,e,f,g,h\r\n", &t) >= 0);
+	ret = tokenize("KICK #a,#b,#c,#d,#e,#f,#g,#h a,b,c,d,e,f,g,h\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    strlen(c.prefix) == 0 &&
 	    c.number == CMD_KICK &&
@@ -1478,9 +1682,12 @@ void test_parse_kickmultiple(void)
 
 void test_parse_kicktoofewchans(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KICK #a,#b,#c,#d,#e,#f,#g a,b,c,d,e,f,g,h\r\n", &t) >= 0);
+	ret = tokenize("KICK #a,#b,#c,#d,#e,#f,#g a,b,c,d,e,f,g,h\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect KICK command with too few channels failed to return proper error\n");
 		++tests_failed;
@@ -1491,9 +1698,12 @@ void test_parse_kicktoofewchans(void)
 
 void test_parse_kicktoofewnicks(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KICK #a,#b,#c,#d,#e,#f,#g,#h a,b,c,d,e,f,g\r\n", &t) >= 0);
+	ret = tokenize("KICK #a,#b,#c,#d,#e,#f,#g,#h a,b,c,d,e,f,g\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect KICK command with too few nicknames failed to return proper error\n");
 		++tests_failed;
@@ -1504,9 +1714,12 @@ void test_parse_kicktoofewnicks(void)
 
 void test_parse_kicktoomuchstuff(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KICK #a,#b,#c,#d,#e,#f,#g,#h,#i a,b,c,d,e,f,g,h,i\r\n", &t) >= 0);
+	ret = tokenize("KICK #a,#b,#c,#d,#e,#f,#g,#h,#i a,b,c,d,e,f,g,h,i\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect KICK command with too much stuff failed to return proper error\n");
 		++tests_failed;
@@ -1517,9 +1730,12 @@ void test_parse_kicktoomuchstuff(void)
 
 void test_parse_privmsgnorecipient(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PRIVMSG\r\n", &t) >= 0);
+	ret = tokenize("PRIVMSG\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NORECIPIENT) {
 		printf("Incorrect PRIVMSG command with no target failed to return proper error\n");
 		++tests_failed;
@@ -1530,9 +1746,12 @@ void test_parse_privmsgnorecipient(void)
 
 void test_parse_privmsgnotext(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PRIVMSG scarlett\r\n", &t) >= 0);
+	ret = tokenize("PRIVMSG scarlett\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NOTEXTTOSEND) {
 		printf("Incorrect PRIVMSG command with no text failed to return proper error\n");
 		++tests_failed;
@@ -1543,9 +1762,12 @@ void test_parse_privmsgnotext(void)
 
 void test_parse_privmsgcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PRIVMSG scarlett :I hacked your cell phone! LOL\r\n", &t) >= 0);
+	ret = tokenize("PRIVMSG scarlett :I hacked your cell phone! LOL\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_PRIVMSG &&
 	    strlen(c.prefix) == 0 &&
@@ -1561,9 +1783,12 @@ void test_parse_privmsgcommand(void)
 
 void test_parse_privmsgcommandchan(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PRIVMSG #blackhat :I hacked her cell phone! LOL\r\n", &t) >= 0);
+	ret = tokenize("PRIVMSG #blackhat :I hacked her cell phone! LOL\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_PRIVMSG &&
 	    strlen(c.prefix) == 0 &&
@@ -1579,9 +1804,12 @@ void test_parse_privmsgcommandchan(void)
 
 void test_parse_noticenorecipient(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NOTICE\r\n", &t) >= 0);
+	ret = tokenize("NOTICE\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect NOTICE command with no target failed to return proper error\n");
 		++tests_failed;
@@ -1592,9 +1820,12 @@ void test_parse_noticenorecipient(void)
 
 void test_parse_noticenotext(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NOTICE scarlett\r\n", &t) >= 0);
+	ret = tokenize("NOTICE scarlett\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect NOTICE command with no text failed to return proper error\n");
 		++tests_failed;
@@ -1605,9 +1836,12 @@ void test_parse_noticenotext(void)
 
 void test_parse_noticecommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NOTICE scarlett :I hacked your cell phone! LOL\r\n", &t) >= 0);
+	ret = tokenize("NOTICE scarlett :I hacked your cell phone! LOL\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_NOTICE &&
 	    strlen(c.prefix) == 0 &&
@@ -1623,9 +1857,12 @@ void test_parse_noticecommand(void)
 
 void test_parse_noticecommandchan(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("NOTICE #blackhat :I hacked her cell phone! LOL\r\n", &t) >= 0);
+	ret = tokenize("NOTICE #blackhat :I hacked her cell phone! LOL\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_NOTICE &&
 	    strlen(c.prefix) == 0 &&
@@ -1641,9 +1878,12 @@ void test_parse_noticecommandchan(void)
 
 void test_parse_motdnotarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MOTD\r\n", &t) >= 0);
+	ret = tokenize("MOTD\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MOTD &&
 	    strlen(c.prefix) == 0 &&
@@ -1657,9 +1897,12 @@ void test_parse_motdnotarget(void)
 
 void test_parse_motdcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MOTD target.example.com\r\n", &t) >= 0);
+	ret = tokenize("MOTD target.example.com\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MOTD &&
 	    strlen(c.prefix) == 0 &&
@@ -1673,9 +1916,12 @@ void test_parse_motdcommand(void)
 
 void test_parse_lusersalone(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LUSERS\r\n", &t) >= 0);
+	ret = tokenize("LUSERS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_LUSERS &&
 	    strlen(c.prefix) == 0 &&
@@ -1690,9 +1936,12 @@ void test_parse_lusersalone(void)
 
 void test_parse_lusersmask(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LUSERS *.es\r\n", &t) >= 0);
+	ret = tokenize("LUSERS *.es\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_LUSERS &&
 	    strlen(c.prefix) == 0 &&
@@ -1707,9 +1956,12 @@ void test_parse_lusersmask(void)
 
 void test_parse_luserstarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LUSERS *.es target.example.com\r\n", &t) >= 0);
+	ret = tokenize("LUSERS *.es target.example.com\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_LUSERS &&
 	    strlen(c.prefix) == 0 &&
@@ -1724,9 +1976,12 @@ void test_parse_luserstarget(void)
 
 void test_parse_versionalone(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("VERSION\r\n", &t) >= 0);
+	ret = tokenize("VERSION\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_VERSION &&
 	    strlen(c.prefix) == 0 &&
@@ -1740,9 +1995,12 @@ void test_parse_versionalone(void)
 
 void test_parse_versiontarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("VERSION 10.10.210.1\r\n", &t) >= 0);
+	ret = tokenize("VERSION 10.10.210.1\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_VERSION &&
 	    strlen(c.prefix) == 0 &&
@@ -1756,9 +2014,12 @@ void test_parse_versiontarget(void)
 
 void test_parse_statsalone(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("STATS\r\n", &t) >= 0);
+	ret = tokenize("STATS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_STATS &&
 	    strlen(c.prefix) == 0 &&
@@ -1773,9 +2034,12 @@ void test_parse_statsalone(void)
 
 void test_parse_statsquery(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("STATS a\r\n", &t) >= 0);
+	ret = tokenize("STATS a\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_STATS &&
 	    strlen(c.prefix) == 0 &&
@@ -1790,9 +2054,12 @@ void test_parse_statsquery(void)
 
 void test_parse_statstarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("STATS a targetserver\r\n", &t) >= 0);
+	ret = tokenize("STATS a targetserver\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_STATS &&
 	    strlen(c.prefix) == 0 &&
@@ -1807,9 +2074,12 @@ void test_parse_statstarget(void)
 
 void test_parse_statsmultiletter(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("STATS lol\r\n", &t) >= 0);
+	ret = tokenize("STATS lol\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect STATS command with multiletter query failed to return proper error\n");
 		++tests_failed;
@@ -1820,9 +2090,12 @@ void test_parse_statsmultiletter(void)
 
 void test_parse_linksonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LINKS\r\n", &t) >= 0);
+	ret = tokenize("LINKS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_LINKS &&
 	    strlen(c.prefix) == 0 &&
@@ -1837,9 +2110,12 @@ void test_parse_linksonly(void)
 
 void test_parse_linksmask(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LINKS *.time.gov\r\n", &t) >= 0);
+	ret = tokenize("LINKS *.time.gov\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_LINKS &&
 	    strlen(c.prefix) == 0 &&
@@ -1854,9 +2130,12 @@ void test_parse_linksmask(void)
 
 void test_parse_linksremote(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("LINKS 192.168.1.2 *.time.gov\r\n", &t) >= 0);
+	ret = tokenize("LINKS 192.168.1.2 *.time.gov\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_LINKS &&
 	    strlen(c.prefix) == 0 &&
@@ -1871,9 +2150,12 @@ void test_parse_linksremote(void)
 
 void test_parse_timeonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TIME\r\n", &t) >= 0);
+	ret = tokenize("TIME\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_TIME &&
 	    strlen(c.prefix) == 0 &&
@@ -1887,9 +2169,12 @@ void test_parse_timeonly(void)
 
 void test_parse_timetarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TIME darkstar\r\n", &t) >= 0);
+	ret = tokenize("TIME darkstar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_TIME &&
 	    strlen(c.prefix) == 0 &&
@@ -1903,9 +2188,12 @@ void test_parse_timetarget(void)
 
 void test_parse_connectonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT\r\n", &t) >= 0);
+	ret = tokenize("CONNECT\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect CONNECT command with no arguments failed to return proper error\n");
 		++tests_failed;
@@ -1916,9 +2204,12 @@ void test_parse_connectonly(void)
 
 void test_parse_connecttarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect CONNECT command with target only failed to return proper error\n");
 		++tests_failed;
@@ -1929,9 +2220,12 @@ void test_parse_connecttarget(void)
 
 void test_parse_connectbadport(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner FOO\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner FOO\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect CONNECT command with bad port failed to return proper error\n");
 		++tests_failed;
@@ -1942,9 +2236,12 @@ void test_parse_connectbadport(void)
 
 void test_parse_connectbadport2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner 123456\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner 123456\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect CONNECT command with too high port failed to return proper error\n");
 		++tests_failed;
@@ -1955,9 +2252,12 @@ void test_parse_connectbadport2(void)
 
 void test_parse_connectbadport3(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner 0\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner 0\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect CONNECT command with too low port failed to return proper error\n");
 		++tests_failed;
@@ -1968,9 +2268,12 @@ void test_parse_connectbadport3(void)
 
 void test_parse_connectgoodport(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner 1\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner 1\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_CONNECT &&
 	    strlen(c.prefix) == 0 &&
@@ -1986,9 +2289,12 @@ void test_parse_connectgoodport(void)
 
 void test_parse_connectgoodport2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner 65535\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner 65535\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_CONNECT &&
 	    strlen(c.prefix) == 0 &&
@@ -2004,9 +2310,12 @@ void test_parse_connectgoodport2(void)
 
 void test_parse_connectremote(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("CONNECT deckard.bladerunner 6667 batty.bladerunner\r\n", &t) >= 0);
+	ret = tokenize("CONNECT deckard.bladerunner 6667 batty.bladerunner\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_CONNECT &&
 	    strlen(c.prefix) == 0 &&
@@ -2022,9 +2331,12 @@ void test_parse_connectremote(void)
 
 void test_parse_traceonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TRACE\r\n", &t) >= 0);
+	ret = tokenize("TRACE\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_TRACE &&
 	    strlen(c.prefix) == 0 &&
@@ -2038,9 +2350,12 @@ void test_parse_traceonly(void)
 
 void test_parse_tracetarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("TRACE darkstar\r\n", &t) >= 0);
+	ret = tokenize("TRACE darkstar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_TRACE &&
 	    strlen(c.prefix) == 0 &&
@@ -2054,9 +2369,12 @@ void test_parse_tracetarget(void)
 
 void test_parse_adminonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ADMIN\r\n", &t) >= 0);
+	ret = tokenize("ADMIN\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_ADMIN &&
 	    strlen(c.prefix) == 0 &&
@@ -2070,9 +2388,12 @@ void test_parse_adminonly(void)
 
 void test_parse_admintarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ADMIN darkstar\r\n", &t) >= 0);
+	ret = tokenize("ADMIN darkstar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_ADMIN &&
 	    strlen(c.prefix) == 0 &&
@@ -2086,9 +2407,12 @@ void test_parse_admintarget(void)
 
 void test_parse_infoonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INFO\r\n", &t) >= 0);
+	ret = tokenize("INFO\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_INFO &&
 	    strlen(c.prefix) == 0 &&
@@ -2102,9 +2426,12 @@ void test_parse_infoonly(void)
 
 void test_parse_infotarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("INFO darkstar\r\n", &t) >= 0);
+	ret = tokenize("INFO darkstar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_INFO &&
 	    strlen(c.prefix) == 0 &&
@@ -2118,9 +2445,12 @@ void test_parse_infotarget(void)
 
 void test_parse_servlist(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SERVLIST\r\n", &t) >= 0);
+	ret = tokenize("SERVLIST\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SERVLIST &&
 	    strlen(c.prefix) == 0 &&
@@ -2135,9 +2465,12 @@ void test_parse_servlist(void)
 
 void test_parse_servlistmask(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SERVLIST foo*\r\n", &t) >= 0);
+	ret = tokenize("SERVLIST foo*\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SERVLIST &&
 	    strlen(c.prefix) == 0 &&
@@ -2152,9 +2485,12 @@ void test_parse_servlistmask(void)
 
 void test_parse_servlisttype(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SERVLIST foo* BLUE\r\n", &t) >= 0);
+	ret = tokenize("SERVLIST foo* BLUE\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SERVLIST &&
 	    strlen(c.prefix) == 0 &&
@@ -2169,9 +2505,12 @@ void test_parse_servlisttype(void)
 
 void test_parse_squery(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SQUERY\r\n", &t) >= 0);
+	ret = tokenize("SQUERY\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NORECIPIENT) {
 		printf("Incorrect empty SQUERY command failed to return proper error\n");
 		++tests_failed;
@@ -2182,9 +2521,12 @@ void test_parse_squery(void)
 
 void test_parse_squeryservicename(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SQUERY ChanServ\r\n", &t) >= 0);
+	ret = tokenize("SQUERY ChanServ\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NOTEXTTOSEND) {
 		printf("Incorrect SQUERY command with service name failed to return proper error\n");
 		++tests_failed;
@@ -2195,9 +2537,12 @@ void test_parse_squeryservicename(void)
 
 void test_parse_squerycommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SQUERY NickServ :Help me get my password back\r\n", &t) >= 0);
+	ret = tokenize("SQUERY NickServ :Help me get my password back\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SQUERY &&
 	    strlen(c.prefix) == 0 &&
@@ -2212,9 +2557,12 @@ void test_parse_squerycommand(void)
 
 void test_parse_who(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHO\r\n", &t) >= 0);
+	ret = tokenize("WHO\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHO &&
 	    strlen(c.prefix) == 0 &&
@@ -2230,9 +2578,12 @@ void test_parse_who(void)
 
 void test_parse_whonick(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHO lol\r\n", &t) >= 0);
+	ret = tokenize("WHO lol\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHO &&
 	    strlen(c.prefix) == 0 &&
@@ -2248,9 +2599,12 @@ void test_parse_whonick(void)
 
 void test_parse_whoo(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHO #roflcopter o\r\n", &t) >= 0);
+	ret = tokenize("WHO #roflcopter o\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHO &&
 	    strlen(c.prefix) == 0 &&
@@ -2266,9 +2620,12 @@ void test_parse_whoo(void)
 
 void test_parse_whomask(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHO *.es\r\n", &t) >= 0);
+	ret = tokenize("WHO *.es\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHO &&
 	    strlen(c.prefix) == 0 &&
@@ -2284,9 +2641,12 @@ void test_parse_whomask(void)
 
 void test_parse_whoisonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOIS\r\n", &t) >= 0);
+	ret = tokenize("WHOIS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NONICKNAMEGIVEN) {
 		printf("Incorrect WHOIS command without nickname failed to return proper error\n");
 		++tests_failed;
@@ -2297,9 +2657,12 @@ void test_parse_whoisonly(void)
 
 void test_parse_whoissingle(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOIS that_guy\r\n", &t) >= 0);
+	ret = tokenize("WHOIS that_guy\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHOIS &&
 	    strlen(c.prefix) == 0 &&
@@ -2315,9 +2678,12 @@ void test_parse_whoissingle(void)
 
 void test_parse_whoistoomany(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOIS a,b,c,d,e,f,g,h,i\r\n", &t) >= 0);
+	ret = tokenize("WHOIS a,b,c,d,e,f,g,h,i\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect WHOIS command with too many nicknames failed to return proper error\n");
 		++tests_failed;
@@ -2328,9 +2694,12 @@ void test_parse_whoistoomany(void)
 
 void test_parse_whoistargeteight(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOIS lu a,b,c,d,e,f,g,h\r\n", &t) >= 0);
+	ret = tokenize("WHOIS lu a,b,c,d,e,f,g,h\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHOIS &&
 	    strlen(c.prefix) == 0 &&
@@ -2353,9 +2722,12 @@ void test_parse_whoistargeteight(void)
 
 void test_parse_whowasone(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOWAS wasp\r\n", &t) >= 0);
+	ret = tokenize("WHOWAS wasp\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHOWAS &&
 	    strlen(c.prefix) == 0 &&
@@ -2372,9 +2744,12 @@ void test_parse_whowasone(void)
 
 void test_parse_whowaseight(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOWAS a,b,c,d,e,f,g,h\r\n", &t) >= 0);
+	ret = tokenize("WHOWAS a,b,c,d,e,f,g,h\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHOWAS &&
 	    strlen(c.prefix) == 0 &&
@@ -2398,9 +2773,12 @@ void test_parse_whowaseight(void)
 
 void test_parse_whowasnine(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOWAS a,b,c,d,e,f,g,h,i\r\n", &t) >= 0);
+	ret = tokenize("WHOWAS a,b,c,d,e,f,g,h,i\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect WHOWAS command with nine nicknames failed to return proper error\n");
 		++tests_failed;
@@ -2411,9 +2789,12 @@ void test_parse_whowasnine(void)
 
 void test_parse_whowasonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOWAS\r\n", &t) >= 0);
+	ret = tokenize("WHOWAS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NONICKNAMEGIVEN) {
 		printf("Incorrect WHOWAS command without arguments failed to return proper error\n");
 		++tests_failed;
@@ -2424,9 +2805,12 @@ void test_parse_whowasonly(void)
 
 void test_parse_whowascount(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOWAS foo bar\r\n", &t) >= 0);
+	ret = tokenize("WHOWAS foo bar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect WHOWAS command with invalid count failed to return proper error\n");
 		++tests_failed;
@@ -2437,9 +2821,12 @@ void test_parse_whowascount(void)
 
 void test_parse_whowastarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WHOWAS foo 3 bar\r\n", &t) >= 0);
+	ret = tokenize("WHOWAS foo 3 bar\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WHOWAS &&
 	    strlen(c.prefix) == 0 &&
@@ -2456,9 +2843,12 @@ void test_parse_whowastarget(void)
 
 void test_parse_killonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KILL\r\n", &t) >= 0);
+	ret = tokenize("KILL\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect KILL command without arguments failed to return proper error\n");
 		++tests_failed;
@@ -2469,9 +2859,12 @@ void test_parse_killonly(void)
 
 void test_parse_killnick(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KILL nick\r\n", &t) >= 0);
+	ret = tokenize("KILL nick\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect KILL command with nickname only failed to return proper error\n");
 		++tests_failed;
@@ -2482,9 +2875,12 @@ void test_parse_killnick(void)
 
 void test_parse_killcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("KILL foo :Stop your rude behavior!\r\n", &t) >= 0);
+	ret = tokenize("KILL foo :Stop your rude behavior!\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_KILL &&
 	    strlen(c.prefix) == 0 &&
@@ -2499,9 +2895,12 @@ void test_parse_killcommand(void)
 
 void test_parse_pingonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PING\r\n", &t) >= 0);
+	ret = tokenize("PING\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NOORIGIN) {
 		printf("Incorrect PING command without arguments failed to return proper error\n");
 		++tests_failed;
@@ -2512,9 +2911,12 @@ void test_parse_pingonly(void)
 
 void test_parse_pingserver(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PING tolsun.oulu.fi\r\n", &t) >= 0);
+	ret = tokenize("PING tolsun.oulu.fi\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_PING &&
 	    strlen(c.prefix) == 0 &&
@@ -2529,9 +2931,12 @@ void test_parse_pingserver(void)
 
 void test_parse_pingserver2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PING WiZ tolsun.oulu.fi\r\n", &t) >= 0);
+	ret = tokenize("PING WiZ tolsun.oulu.fi\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_PING &&
 	    strlen(c.prefix) == 0 &&
@@ -2546,9 +2951,12 @@ void test_parse_pingserver2(void)
 
 void test_parse_pongonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PONG\r\n", &t) >= 0);
+	ret = tokenize("PONG\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NOORIGIN) {
 		printf("Incorrect PONG command without arguments failed to return proper error\n");
 		++tests_failed;
@@ -2559,9 +2967,12 @@ void test_parse_pongonly(void)
 
 void test_parse_pongserver(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PONG tolsun.oulu.fi\r\n", &t) >= 0);
+	ret = tokenize("PONG tolsun.oulu.fi\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_PONG &&
 	    strlen(c.prefix) == 0 &&
@@ -2576,9 +2987,12 @@ void test_parse_pongserver(void)
 
 void test_parse_pongserver2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("PONG WiZ tolsun.oulu.fi\r\n", &t) >= 0);
+	ret = tokenize("PONG WiZ tolsun.oulu.fi\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_PONG &&
 	    strlen(c.prefix) == 0 &&
@@ -2593,9 +3007,12 @@ void test_parse_pongserver2(void)
 
 void test_parse_erroronly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ERROR\r\n", &t) >= 0);
+	ret = tokenize("ERROR\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect ERROR command without arguments failed to return proper error\n");
 		++tests_failed;
@@ -2606,9 +3023,12 @@ void test_parse_erroronly(void)
 
 void test_parse_errorcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ERROR :The server is on fire\r\n", &t) >= 0);
+	ret = tokenize("ERROR :The server is on fire\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_ERROR &&
 	    strlen(c.prefix) == 0 &&
@@ -2622,9 +3042,12 @@ void test_parse_errorcommand(void)
 
 void test_parse_awayonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("AWAY\r\n", &t) >= 0);
+	ret = tokenize("AWAY\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_AWAY &&
 	    strlen(c.prefix) == 0 &&
@@ -2638,9 +3061,12 @@ void test_parse_awayonly(void)
 
 void test_parse_awaytext(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("AWAY :afk, tornado\r\n", &t) >= 0);
+	ret = tokenize("AWAY :afk, tornado\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_AWAY &&
 	    strlen(c.prefix) == 0 &&
@@ -2654,9 +3080,12 @@ void test_parse_awaytext(void)
 
 void test_parse_rehashcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("REHASH foo\r\n", &t) >= 0);
+	ret = tokenize("REHASH foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_REHASH &&
 	    strlen(c.prefix) == 0) {
@@ -2669,9 +3098,12 @@ void test_parse_rehashcommand(void)
 
 void test_parse_diecommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("DIE foo\r\n", &t) >= 0);
+	ret = tokenize("DIE foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_DIE &&
 	    strlen(c.prefix) == 0) {
@@ -2684,9 +3116,12 @@ void test_parse_diecommand(void)
 
 void test_parse_restartcommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("RESTART foo\r\n", &t) >= 0);
+	ret = tokenize("RESTART foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_RESTART &&
 	    strlen(c.prefix) == 0) {
@@ -2699,9 +3134,12 @@ void test_parse_restartcommand(void)
 
 void test_parse_summononly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SUMMON\r\n", &t) >= 0);
+	ret = tokenize("SUMMON\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NORECIPIENT) {
 		printf("Incorrect SUMMON command without arguments failed to return proper error\n");
 		++tests_failed;
@@ -2712,9 +3150,12 @@ void test_parse_summononly(void)
 
 void test_parse_summonuser(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SUMMON flynn\r\n", &t) >= 0);
+	ret = tokenize("SUMMON flynn\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SUMMON &&
 	    strlen(c.prefix) == 0 &&
@@ -2730,9 +3171,12 @@ void test_parse_summonuser(void)
 
 void test_parse_summontarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SUMMON flynn localhost\r\n", &t) >= 0);
+	ret = tokenize("SUMMON flynn localhost\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SUMMON &&
 	    strlen(c.prefix) == 0 &&
@@ -2748,9 +3192,12 @@ void test_parse_summontarget(void)
 
 void test_parse_summonchannel(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("SUMMON flynn localhost #foo\r\n", &t) >= 0);
+	ret = tokenize("SUMMON flynn localhost #foo\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_SUMMON &&
 	    strlen(c.prefix) == 0 &&
@@ -2766,9 +3213,12 @@ void test_parse_summonchannel(void)
 
 void test_parse_usersonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USERS\r\n", &t) >= 0);
+	ret = tokenize("USERS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_USERS &&
 	    strlen(c.prefix) == 0 &&
@@ -2782,9 +3232,12 @@ void test_parse_usersonly(void)
 
 void test_parse_userstarget(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USERS target.example.com\r\n", &t) >= 0);
+	ret = tokenize("USERS target.example.com\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_USERS &&
 	    strlen(c.prefix) == 0 &&
@@ -2798,9 +3251,12 @@ void test_parse_userstarget(void)
 
 void test_parse_wallopsonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WALLOPS\r\n", &t) >= 0);
+	ret = tokenize("WALLOPS\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect WALLOPS command with no text failed to return proper error\n");
 		++tests_failed;
@@ -2811,9 +3267,12 @@ void test_parse_wallopsonly(void)
 
 void test_parse_wallopscommand(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("WALLOPS :It's time to kick ass and chew bubble gum\r\n", &t) >= 0);
+	ret = tokenize("WALLOPS :It's time to kick ass and chew bubble gum\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_WALLOPS &&
 	    strlen(c.prefix) == 0 &&
@@ -2827,9 +3286,12 @@ void test_parse_wallopscommand(void)
 
 void test_parse_userhostonly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USERHOST\r\n", &t) >= 0);
+	ret = tokenize("USERHOST\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect USERHOST command with no nicknames failed to return proper error\n");
 		++tests_failed;
@@ -2840,9 +3302,12 @@ void test_parse_userhostonly(void)
 
 void test_parse_userhostone(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USERHOST 23m foo 11s\r\n", &t) >= 0);
+	ret = tokenize("USERHOST 23m foo 11s\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_USERHOST &&
 	    strlen(c.prefix) == 0 &&
@@ -2857,9 +3322,12 @@ void test_parse_userhostone(void)
 
 void test_parse_userhostfive(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USERHOST foo bar baz big bang\r\n", &t) >= 0);
+	ret = tokenize("USERHOST foo bar baz big bang\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_USERHOST &&
 	    strlen(c.prefix) == 0 &&
@@ -2878,9 +3346,12 @@ void test_parse_userhostfive(void)
 
 void test_parse_userhostsix(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("USERHOST foo bar baz big bang other\r\n", &t) >= 0);
+	ret = tokenize("USERHOST foo bar baz big bang other\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect USERHOST command with six nicks failed to parse properly\n");
 		++tests_failed;
@@ -2891,9 +3362,12 @@ void test_parse_userhostsix(void)
 
 void test_parse_isononly(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON\r\n", &t) >= 0);
+	ret = tokenize("ISON\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != ERR_NEEDMOREPARAMS) {
 		printf("Incorrect ISON command with no nicks failed to return proper error\n");
 		++tests_failed;
@@ -2904,9 +3378,12 @@ void test_parse_isononly(void)
 
 void test_parse_isonall(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON a b c d e f g h i j k l m n o\r\n", &t) >= 0);
+	ret = tokenize("ISON a b c d e f g h i j k l m n o\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_ISON &&
 	    strlen(c.prefix) == 0 &&
@@ -2935,9 +3412,12 @@ void test_parse_isonall(void)
 
 void test_parse_isonsome(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON a b c 11s e f g h i 23m k l m n o\r\n", &t) >= 0);
+	ret = tokenize("ISON a b c 11s e f g h i 23m k l m n o\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_ISON &&
 	    strlen(c.prefix) == 0 &&
@@ -2964,9 +3444,12 @@ void test_parse_isonsome(void)
 
 void test_parse_isontoomany(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("ISON a b c d e f g h i j k l m n o p\r\n", &t) >= 0);
+	ret = tokenize("ISON a b c d e f g h i j k l m n o p\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect ISON command with too many nicks failed to return proper error\n");
 		++tests_failed;
@@ -2977,9 +3460,12 @@ void test_parse_isontoomany(void)
 
 void test_parse_cmodetoggle1(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan a-i+m-n+q-p+s-r+t\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan a-i+m-n+q-p+s-r+t\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3003,9 +3489,12 @@ void test_parse_cmodetoggle1(void)
 
 void test_parse_cmodetoggle2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan -a+i-m+n-q+p-s+r-t\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan -a+i-m+n-q+p-s+r-t\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3029,9 +3518,12 @@ void test_parse_cmodetoggle2(void)
 
 void test_parse_cmodebadmask(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan +b mask\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan +b mask\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect MODE command due to bad mask failed to return proper error\n");
 		++tests_failed;
@@ -3042,9 +3534,12 @@ void test_parse_cmodebadmask(void)
 
 void test_parse_cmodemasks(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan b-e+I *!*@*.cn yaoming!*@* *!*@*.xxx\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan b-e+I *!*@*.cn yaoming!*@* *!*@*.xxx\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3077,9 +3572,12 @@ void test_parse_cmodemasks(void)
 
 void test_parse_cmodetoomanyargs(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan +oooo foo bar baz big\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan +oooo foo bar baz big\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) != PARSE_ERROR) {
 		printf("Incorrect MODE command with too many args failed to return proper error\n");
 		++tests_failed;
@@ -3090,9 +3588,12 @@ void test_parse_cmodetoomanyargs(void)
 
 void test_parse_cmodenicks(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan +oo-v foo bar baz\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan +oo-v foo bar baz\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3125,9 +3626,12 @@ void test_parse_cmodenicks(void)
 
 void test_parse_cmodekeylimit1(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan -k+l key 50\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan -k+l key 50\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3157,9 +3661,12 @@ void test_parse_cmodekeylimit1(void)
 
 void test_parse_cmodekeylimit2(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #chan k-l secretpass\r\n", &t) >= 0);
+	ret = tokenize("MODE #chan k-l secretpass\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3189,9 +3696,12 @@ void test_parse_cmodekeylimit2(void)
 
 void test_parse_cmodeexample(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #Finnish +imI *!*@*.fi\r\n", &t) >= 0);
+	ret = tokenize("MODE #Finnish +imI *!*@*.fi\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&
@@ -3218,9 +3728,12 @@ void test_parse_cmodeexample(void)
 
 void test_parse_cmodebanmask(void)
 {
+	int ret;
+
 	init_structs();
 	++tests_counter;
-	assert(tokenize("MODE #Finnish b\r\n", &t) >= 0);
+	ret = tokenize("MODE #Finnish b\r\n", &t);
+	assert(ret >= 0);
 	if (parse_tokens(&t, &c) == 0 &&
 	    c.number == CMD_MODE &&
 	    strlen(c.prefix) == 0 &&

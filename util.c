@@ -95,7 +95,8 @@ int get_listen_socket(const char *addr, int port, int *s, int *ipv6)
 	/* Check port. */
 	if (port <= 0 || port > 65535)
 		return -1;
-	assert(snprintf(portstr, sizeof(portstr), "%d", port) > 0);
+	ret = snprintf(portstr, sizeof(portstr), "%d", port);
+	assert(ret > 0);
 
 	/* Prepare hints for getaddrinfo(). */
 	memset(&hints, 0, sizeof(hints));

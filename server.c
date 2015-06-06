@@ -374,6 +374,7 @@ static void srv_log(struct server *srv, const char *str)
 {
 	char *msg = srv_malloc_msg();
 	int len;
+	int ret;
 
 	struct srv_enqueue_cb_args args;
 
@@ -382,8 +383,9 @@ static void srv_log(struct server *srv, const char *str)
 	args.srv = srv;
 	args.msg = msg;
 	args.len = len;
-	assert(db_run_on_members(srv->db, srv->dyndata.logchan.id_channel,
-				 srv_enqueue_cb, &args) == 0);
+	ret = db_run_on_members(srv->db, srv->dyndata.logchan.id_channel,
+				 srv_enqueue_cb, &args);
+	assert(ret == 0);
 	srv_free(&msg);
 }
 
@@ -717,6 +719,7 @@ static void srv_nickname_change(struct server *srv, struct db_client *cli, const
 	char *msg = srv_malloc_msg();
 	struct srv_enqueue_cb_args cbargs;
 	int len;
+	int ret;
 
 	len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s NICK %s\r\n", old_fullname, cli->orig_nickname);
 	srv_enqueue_client_data(srv, cli, msg, len);
@@ -724,7 +727,8 @@ static void srv_nickname_change(struct server *srv, struct db_client *cli, const
 	cbargs.srv = srv;
 	cbargs.msg = msg;
 	cbargs.len = len;
-	assert(db_run_on_neighbors(srv->db, cli->id_client, srv_enqueue_cb, &cbargs) == 0); 
+	ret = db_run_on_neighbors(srv->db, cli->id_client, srv_enqueue_cb, &cbargs);
+	assert(ret == 0); 
 	srv_free(&msg);
 }
 
@@ -1012,6 +1016,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 	char lchan[CHANNEL_BUFFER_SIZE];
 	char *msg = srv_malloc_msg();
 	int len;
+	int ret;
 	struct _type_nick *p;
 	struct _type_chan *ptc;
 
@@ -1371,7 +1376,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						}
 
 						/* Modify membership in database. */
-						assert(db_modify_membership(srv->db, &m2) == 0);
+						ret = db_modify_membership(srv->db, &m2);
+						assert(ret == 0);
 					} else 
 						srv_send_error_usernotinchannel(srv, cli, ptc->others[i].param, chan.orig_name);
 				/* MODE_BANMASK */
@@ -1383,8 +1389,10 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						strcpy(bm.mask, bm.orig_mask);
 						irclower(bm.mask);
 
-						if (db_get_banmask_by_mask(srv->db, bm.id_channel, bm.mask, &bm) != 0)
-							assert(db_add_banmask(srv->db, &bm) == 0);
+						if (db_get_banmask_by_mask(srv->db, bm.id_channel, bm.mask, &bm) != 0) {
+							ret = db_add_banmask(srv->db, &bm);
+							assert(ret == 0);
+						}
 
 						areply.others[areply.num_others].other_str = "+b";
 						areply.others[areply.num_others].arg_str = ptc->others[i].param;
@@ -1397,7 +1405,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						if (db_get_banmask_by_mask(srv->db, chan.id_channel,
 									   ptc->others[i].param, &bm) == 0) {
 							/* Delete banmask and accumulate reply. */
-							assert(db_del_banmask(srv->db, &bm) == 0);
+							ret = db_del_banmask(srv->db, &bm);
+							assert(ret == 0);
 							areply.others[areply.num_others].other_str = "-b";
 							areply.others[areply.num_others].arg_str = ptc->others[i].param;
 							++areply.num_others;
@@ -1412,8 +1421,10 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						strcpy(em.mask, em.orig_mask);
 						irclower(em.mask);
 
-						if (db_get_exceptmask_by_mask(srv->db, em.id_channel, em.mask, &em) != 0)
-							assert(db_add_exceptmask(srv->db, &em) == 0);
+						if (db_get_exceptmask_by_mask(srv->db, em.id_channel, em.mask, &em) != 0) {
+							ret = db_add_exceptmask(srv->db, &em);
+							assert(ret == 0);
+						}
 
 						areply.others[areply.num_others].other_str = "+e";
 						areply.others[areply.num_others].arg_str = ptc->others[i].param;
@@ -1426,7 +1437,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						if (db_get_exceptmask_by_mask(srv->db, chan.id_channel,
 									      ptc->others[i].param, &em) == 0) {
 							/* Delete exceptmask and accumulate reply. */
-							assert(db_del_exceptmask(srv->db, &em) == 0);
+							ret = db_del_exceptmask(srv->db, &em);
+							assert(ret == 0);
 							areply.others[areply.num_others].other_str = "-e";
 							areply.others[areply.num_others].arg_str = ptc->others[i].param;
 							++areply.num_others;
@@ -1441,8 +1453,10 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						strcpy(im.mask, im.orig_mask);
 						irclower(im.mask);
 
-						if (db_get_invitemask_by_mask(srv->db, im.id_channel, im.mask, &im) != 0)
-							assert(db_add_invitemask(srv->db, &im) == 0);
+						if (db_get_invitemask_by_mask(srv->db, im.id_channel, im.mask, &im) != 0) {
+							ret = db_add_invitemask(srv->db, &im);
+							assert(ret == 0);
+						}
 
 						areply.others[areply.num_others].other_str = "+I";
 						areply.others[areply.num_others].arg_str = ptc->others[i].param;
@@ -1455,7 +1469,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						if (db_get_invitemask_by_mask(srv->db, chan.id_channel,
 									      ptc->others[i].param, &im) == 0) {
 							/* Delete invitemask and accumulate reply. */
-							assert(db_del_invitemask(srv->db, &im) == 0);
+							ret = db_del_invitemask(srv->db, &im);
+							assert(ret == 0);
 							areply.others[areply.num_others].other_str = "-I";
 							areply.others[areply.num_others].arg_str = ptc->others[i].param;
 							++areply.num_others;
@@ -1465,7 +1480,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 			}
 
 			/* Save channel modifications to database. */
-			assert(db_modify_channel(srv->db, &chan) == 0);
+			ret = db_modify_channel(srv->db, &chan);
+			assert(ret == 0);
 
 			if (areply.anonymous == NULL &&
 			    areply.invite_only == NULL &&
@@ -1517,7 +1533,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 			args.srv = srv;
 			args.msg = msg;
 			args.len = len;
-			assert(db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args) == 0);
+			ret = db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args);
+			assert(ret == 0);
 		}
 		break;
 	}
@@ -1568,11 +1585,13 @@ static void srv_list_invites_cb(void *mask_, void *args_)
 static void srv_list_bans(struct server *srv, struct db_client *cli, struct db_channel *chan)
 {
 	struct srv_list_masks_args args;
+	int ret;
 
 	args.srv = srv;
 	args.cli = cli;
 	args.chan = chan;
-	assert(db_run_on_banmasks(srv->db, chan->id_channel, srv_list_bans_cb, &args) == 0);
+	ret = db_run_on_banmasks(srv->db, chan->id_channel, srv_list_bans_cb, &args);
+	assert(ret == 0);
 
 	srv_fmt_enq(srv, cli, ":%s %03d %s %s :End of channel ban list\r\n",
 		    srv->config.server_name, RPL_ENDOFBANLIST, srv_dest_nick(cli), chan->orig_name);
@@ -1581,11 +1600,13 @@ static void srv_list_bans(struct server *srv, struct db_client *cli, struct db_c
 static void srv_list_excepts(struct server *srv, struct db_client *cli, struct db_channel *chan)
 {
 	struct srv_list_masks_args args;
+	int ret;
 
 	args.srv = srv;
 	args.cli = cli;
 	args.chan = chan;
-	assert(db_run_on_exceptmasks(srv->db, chan->id_channel, srv_list_excepts_cb, &args) == 0);
+	ret = db_run_on_exceptmasks(srv->db, chan->id_channel, srv_list_excepts_cb, &args);
+	assert(ret == 0);
 
 	srv_fmt_enq(srv, cli, ":%s %03d %s %s :End of channel exception list\r\n",
 		    srv->config.server_name, RPL_ENDOFEXCEPTLIST, srv_dest_nick(cli), chan->orig_name);
@@ -1594,11 +1615,13 @@ static void srv_list_excepts(struct server *srv, struct db_client *cli, struct d
 static void srv_list_invites(struct server *srv, struct db_client *cli, struct db_channel *chan)
 {
 	struct srv_list_masks_args args;
+	int ret;
 
 	args.srv = srv;
 	args.cli = cli;
 	args.chan = chan;
-	assert(db_run_on_invitemasks(srv->db, chan->id_channel, srv_list_invites_cb, &args) == 0);
+	ret = db_run_on_invitemasks(srv->db, chan->id_channel, srv_list_invites_cb, &args);
+	assert(ret == 0);
 
 	srv_fmt_enq(srv, cli, ":%s %03d %s %s :End of channel invite list\r\n",
 		    srv->config.server_name, RPL_ENDOFINVITELIST, srv_dest_nick(cli), chan->orig_name);
@@ -1624,6 +1647,7 @@ static void srv_who_chan_cb(void *cli_, void *args_)
 	struct db_client *curcli;
 	struct srv_who_chan_cb_args *args;
 	struct db_membership m;
+	int ret;
 
 	curcli = cli_;
 	args = args_;
@@ -1631,7 +1655,8 @@ static void srv_who_chan_cb(void *cli_, void *args_)
 	if (curcli->invisible_flag && ! args->all)
 		return;
 
-	assert(db_get_membership(args->srv->db, args->chan->id_channel, curcli->id_client, &m) == 0);
+	ret = db_get_membership(args->srv->db, args->chan->id_channel, curcli->id_client, &m);
+	assert(ret == 0);
 
 	srv_fmt_enq(args->srv, args->cli, ":%s %03d %s %s %s %s %s %s %s%s%s :0 %s\r\n",
 		    args->srv->config.server_name, RPL_WHOREPLY, srv_dest_nick(args->cli),
@@ -1935,6 +1960,7 @@ static void srv_process_whowas(struct server *srv, struct db_client *cli, struct
 {
 	char *lnick = srv_malloc_msg();
 	int i;
+	int ret;
 	const char *nick;
 	struct srv_whowas_cb_args args;
 
@@ -1947,7 +1973,8 @@ static void srv_process_whowas(struct server *srv, struct db_client *cli, struct
 		args.cli = cli;
 		args.results = 0;
 
-		assert(db_run_on_whowas(srv->db, lnick, c->args.cmd_whowas.count, srv_whowas_cb, &args) == 0);
+		ret = db_run_on_whowas(srv->db, lnick, c->args.cmd_whowas.count, srv_whowas_cb, &args);
+		assert(ret == 0);
 		if (args.results == 0) {
 			srv_fmt_enq(srv, cli, ":%s %03d %s %s :There was no such nickname\r\n",
 				    srv->config.server_name, ERR_WASNOSUCHNICK, srv_dest_nick(cli), nick);
@@ -1968,6 +1995,8 @@ static void srv_whois_cb(void *chan_, void *args_)
 	struct db_membership w_memb;
 	struct db_membership c_memb;
 
+	int ret;
+
 	chan = chan_;
 	args = args_;
 
@@ -1981,7 +2010,8 @@ static void srv_whois_cb(void *chan_, void *args_)
 		 */
 		return;
 
-	assert(db_get_membership(args->srv->db, chan->id_channel, args->wn->id_client, &w_memb) == 0);
+	ret = db_get_membership(args->srv->db, chan->id_channel, args->wn->id_client, &w_memb);
+	assert(ret == 0);
 
 	srv_fmt_enq(args->srv, args->cli, ":%s %03d %s %s %s%s\r\n",
 		    args->srv->config.server_name, RPL_WHOISCHANNELS,
@@ -1995,6 +2025,7 @@ static void srv_process_whois(struct server *srv, struct db_client *cli, struct 
 	struct db_client wn;
 	const char *nick;
 	int i;
+	int ret;
 
 	const char *s;
 	const char *n;
@@ -2051,7 +2082,8 @@ static void srv_process_whois(struct server *srv, struct db_client *cli, struct 
 		args.srv = srv;
 		args.cli = cli;
 		args.wn = &wn;
-		assert(db_run_on_client_channels(srv->db, wn.id_client, srv_whois_cb, &args) == 0);
+		ret = db_run_on_client_channels(srv->db, wn.id_client, srv_whois_cb, &args);
+		assert(ret == 0);
 	}
 
 	srv_fmt_enq(srv, cli,
@@ -2067,7 +2099,7 @@ static void srv_process_kill(struct server *srv, struct db_client *cli, struct c
 	char *lnick = srv_malloc_msg();
 	char *msg = srv_malloc_msg();
 	struct db_client killed;
-
+	int ret;
 
 	if (! cli->operator_flag && ! cli->local_operator_flag) {
 		srv_send_error_noprivileges(srv, cli);
@@ -2083,7 +2115,8 @@ static void srv_process_kill(struct server *srv, struct db_client *cli, struct c
 	}
 
 	/* Add the nick to the list of forbidden nicks for some time. */
-	assert(db_add_expiring_forbidden_nick(srv->db, killed.nickname, srv->config.kill_timeout_seconds) == 0);
+	ret = db_add_expiring_forbidden_nick(srv->db, killed.nickname, srv->config.kill_timeout_seconds);
+	assert(ret == 0);
 
 	/* Generate the QUIT message for everyone. */
 	srv_fmt(msg, MESSAGE_BUFFER_SIZE, "Killed: %s",
@@ -2181,11 +2214,13 @@ static void srv_one_names_cb(void *cli_, void *args_)
 	struct db_membership m;
 
 	int minilen;
+	int ret;
 
 	cli = cli_;
 	args = args_;
 
-	assert(db_get_membership(args->srv->db, args->chan->id_channel, cli->id_client, &m) == 0);
+	ret = db_get_membership(args->srv->db, args->chan->id_channel, cli->id_client, &m);
+	assert(ret == 0);
 
 	if (!args->all && cli->invisible_flag)
 		return;
@@ -2223,6 +2258,7 @@ static void srv_process_one_names(struct server *srv, struct db_client *cli, str
 {
 	char *msg = srv_malloc_msg();
 	int len;
+	int ret;
 
 	struct srv_one_names_cb_args args;
 
@@ -2237,7 +2273,8 @@ static void srv_process_one_names(struct server *srv, struct db_client *cli, str
 		args.bufused = 0;
 		args.accum = 0;
 
-		assert(db_run_on_members(srv->db, chan->id_channel, srv_one_names_cb, &args) == 0);
+		ret = db_run_on_members(srv->db, chan->id_channel, srv_one_names_cb, &args);
+		assert(ret == 0);
 
 		/* Send possible remaining unsent reply line. */
 		len = (int)strlen(msg);
@@ -2282,7 +2319,8 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 		strcpy(chan.orig_name, cname);
 		strcpy(chan.name, lchan);
 
-		assert(db_add_channel(srv->db, &chan) == 0);
+		ret = db_add_channel(srv->db, &chan);
+		assert(ret == 0);
 
 		/* Log channel creation. */
 		snprintf(msg, MESSAGE_BUFFER_SIZE, "CLID_%lld created channel %s",
@@ -2339,7 +2377,8 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 		memb.voice_flag = 0;
 	}
 
-	assert(db_add_membership(srv->db, &memb) == 0);
+	ret = db_add_membership(srv->db, &memb);
+	assert(ret == 0);
 
 	len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s JOIN %s\r\n", cli->orig_fullname, chan.orig_name);
 	srv_enqueue_client_data(srv, cli, msg, len);
@@ -2348,7 +2387,8 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 		args.srv = srv;
 		args.msg = msg;
 		args.len = len;
-		assert(db_run_on_members_except(srv->db, chan.id_channel, cli->id_client, srv_enqueue_cb, &args) == 0);
+		ret = db_run_on_members_except(srv->db, chan.id_channel, cli->id_client, srv_enqueue_cb, &args);
+		assert(ret == 0);
 	}
 
 	srv_send_reply_topic(srv, cli, chan.orig_name, chan.topic);
@@ -2379,12 +2419,14 @@ static void srv_process_join(struct server *srv, struct db_client *cli, struct c
 {
 	struct srv_join_zero_cb_args args;
 	int i;
+	int ret;
 
 	if (c->args.cmd_join.num_channels == 1 &&
 	    strcmp(c->args.cmd_join.channels[0], "0") == 0) {
 		args.srv = srv;
 		args.cli = cli;
-		assert(db_run_on_client_channels(srv->db, cli->id_client, srv_join_zero_cb, &args) == 0);
+		ret = db_run_on_client_channels(srv->db, cli->id_client, srv_join_zero_cb, &args);
+		assert(ret == 0);
 		return;
 	}
 
@@ -2399,6 +2441,7 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 	struct srv_enqueue_cb_args args;
 	char *msg = srv_malloc_msg();
 	int len;
+	int ret;
 
 	char *lchan = srv_malloc_msg();
 	struct db_channel chan;
@@ -2422,7 +2465,8 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 		}
 
 		strcpy(chan.topic, c->args.cmd_topic.topic);
-		assert(db_modify_channel(srv->db, &chan) == 0);
+		ret = db_modify_channel(srv->db, &chan);
+		assert(ret == 0);
 
 		len = srv_fmt(msg, MESSAGE_BUFFER_SIZE, ":%s TOPIC %s :%s\r\n",
 			      cli->orig_fullname, chan.orig_name, c->args.cmd_topic.topic);
@@ -2430,7 +2474,8 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 		args.srv = srv;
 		args.msg = msg;
 		args.len = len;
-		assert(db_run_on_members_except(srv->db, chan.id_channel, cli->id_client, srv_enqueue_cb, &args) == 0);
+		ret = db_run_on_members_except(srv->db, chan.id_channel, cli->id_client, srv_enqueue_cb, &args);
+		assert(ret == 0);
 	}
 
 	if (strlen(chan.topic) != 0)
@@ -2526,6 +2571,7 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 
 	char *msg;
 	int len;
+	int ret;
 	struct srv_enqueue_cb_args args;
 
 	strcpy(lchan, cname);
@@ -2541,7 +2587,8 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 		return;
 	}
 
-	assert(db_delete_membership(srv->db, chan.id_channel, cli->id_client) == 0);
+	ret = db_delete_membership(srv->db, chan.id_channel, cli->id_client);
+	assert(ret == 0);
 	msg = srv_malloc_msg();
 
 	/* Log channel part. */
@@ -2558,7 +2605,8 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 		args.srv = srv;
 		args.msg = msg;
 		args.len = len;
-		assert(db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args) == 0);
+		ret = db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args);
+		assert(ret == 0);
 	}
 
 	srv_free(&msg);
@@ -2579,6 +2627,7 @@ static void srv_process_one_kick(struct server *srv, struct db_client *cli, cons
 {
 	char *msg;
 	int len;
+	int ret;
 
 	struct db_channel chan;
 	struct db_membership m;
@@ -2630,8 +2679,10 @@ static void srv_process_one_kick(struct server *srv, struct db_client *cli, cons
 	args.srv = srv;
 	args.msg = msg;
 	args.len = len;
-	assert(db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args) == 0);
-	assert(db_delete_membership(srv->db, chan.id_channel, kicked.id_client) == 0);
+	ret = db_run_on_members(srv->db, chan.id_channel, srv_enqueue_cb, &args);
+	assert(ret == 0);
+	ret = db_delete_membership(srv->db, chan.id_channel, kicked.id_client);
+	assert(ret == 0);
 
 	srv_free(&msg);
 }
@@ -2660,6 +2711,8 @@ static void srv_process_invite(struct server *srv, struct db_client *cli, struct
 
 	char lnick[NICKNAME_BUFFER_SIZE];
 	char lchan[CHANNEL_BUFFER_SIZE];
+	
+	int ret;
 
 	strcpy(lnick, c->args.cmd_invite.nickname);
 	irclower(lnick);
@@ -2690,7 +2743,8 @@ static void srv_process_invite(struct server *srv, struct db_client *cli, struct
 
 		if (m.operator_flag && db_get_invite(srv->db, chan.id_channel, guest.id_client, &in) != 0) {
 			/* Save invitation in database. */
-			assert(db_invite_client(srv->db, chan.id_channel, guest.id_client) == 0);
+			ret = db_invite_client(srv->db, chan.id_channel, guest.id_client);
+			assert(ret == 0);
 		}
 	}
 
@@ -3057,7 +3111,8 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 	}
 
 	/* If data was read from the file descriptor, the client MUST exist. */
-	assert(db_get_client_by_fd(srv->db, fd, &cli) == 0);
+	ret = db_get_client_by_fd(srv->db, fd, &cli);
+	assert(ret == 0);
 
 	/* Process command. */
 	if (ret == 0)
@@ -3071,7 +3126,8 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 
 	/* Penalize client. */
 	cli.last_activity += CLIENT_PENALIZATION;
-	assert(db_modify_client(srv->db, &cli) == 0);
+	ret = db_modify_client(srv->db, &cli);
+	assert(ret == 0);
 
 out:
 	srv_free(&message);
@@ -3146,7 +3202,8 @@ void srv_init(struct server *srv, const struct server_config *config)
 	}
 
 	/* Logging channel. */
-	assert(db_get_channel_by_name(srv->db, "#log", &(srv->dyndata.logchan)) == 0);
+	ret = db_get_channel_by_name(srv->db, "#log", &(srv->dyndata.logchan));
+	assert(ret == 0);
 
 	/* Listening socket. */
 	zero_len_address = (strlen(srv->config.address) == 0);
@@ -3163,7 +3220,8 @@ void srv_init(struct server *srv, const struct server_config *config)
 				srv->config.address, srv->config.port);
 		exit(EXIT_FAILURE);
 	}
-	assert(nonblock(srv->listen_socket.fd) == 0);
+	ret = nonblock(srv->listen_socket.fd);
+	assert(ret == 0);
 
 	/* Operators database. */
 	if (strlen(srv->config.operators_filename) > 0) {
@@ -3234,17 +3292,30 @@ static void srv_free_client_slot(struct server *srv, int cli)
 
 static void srv_clear_client_slot(struct server_client *srvcli)
 {
+	int ret;
+
 	srvcli->fd = -1;
-	assert(buffer_consume(&(srvcli->input), -1) == 0);
-	assert(buffer_consume(&(srvcli->output), -1) == 0);
+
+	ret = buffer_consume(&(srvcli->input), -1);
+	assert(ret == 0);
+
+	ret = buffer_consume(&(srvcli->output), -1);
+	assert(ret == 0);
+
 	srvcli->reader.state = RS_NORMAL;
 }
 
 static void srv_disconnect_client(struct server *srv, struct db_client *cli)
 {
-	assert(close_noeintr(cli->fd) == 0);
+	int ret;
+
+	ret = close_noeintr(cli->fd);
+	assert(ret == 0);
+
 	srv_free_client_slot(srv, cli->array_index);
-	assert(db_del_client(srv->db, cli) == 0);
+
+	ret = db_del_client(srv->db, cli);
+	assert(ret == 0);
 }
 
 static void srv_enqueue_cb(void *cli_, void *args_)
@@ -3363,7 +3434,8 @@ static void srv_poll_sockets(struct server *srv)
 	srv->pollfds.array[0].revents = 0;
 	srv->pollfds.used = 1;
 
-	assert(db_run_on_clients(srv->db, srv_poll_cb, srv) == 0);
+	ret = db_run_on_clients(srv->db, srv_poll_cb, srv);
+	assert(ret == 0);
 
 	/* Wait no more than one second. */
 	while ((ret = poll(srv->pollfds.array, srv->pollfds.used, 1000)) == -1 && errno == EINTR)
@@ -3431,7 +3503,8 @@ static void srv_poll_sockets(struct server *srv)
 
 		/* Read attempt. */
 		if ((srv->pollfds.array[i].revents & POLLIN) || (srv->pollfds.array[i].revents & POLLPRI)) {
-			assert(db_update_client_activity(srv->db, cli.id_client) == 0);
+			ret = db_update_client_activity(srv->db, cli.id_client);
+			assert(ret == 0);
 
 			/* The following call may trigger srv_reader_cb(). */
 			ret = read_and_callback(&(srv->clients.array[cli.array_index].reader), srv);
@@ -3468,6 +3541,8 @@ static void srv_accept_new_clients(struct server *srv)
 	int fd;
 	int slot;
 	int port;
+	int ret;
+	const char *pret;
 
 	for (;;) {
 		fd = accept(srv->listen_socket.fd, NULL, NULL);
@@ -3476,7 +3551,8 @@ static void srv_accept_new_clients(struct server *srv)
 			break;
 
 		if (srv_full(srv)) {
-			assert(close_noeintr(fd) == 0);
+			ret = close_noeintr(fd);
+			assert(ret == 0);
 			continue;
 		}
 
@@ -3487,26 +3563,38 @@ static void srv_accept_new_clients(struct server *srv)
 		srv->clients.array[slot].fd = fd;
 
 		/* Make file descriptor non-blocking. */
-		assert(nonblock(fd) == 0);
+		ret = nonblock(fd);
+		assert(ret == 0);
 
 		/* Convert client address. */
 		if (srv->listen_socket.is_ipv6) {
 			struct sockaddr_in6 addr;
 			addrlen = sizeof(addr);
-			assert(getpeername(fd, (struct sockaddr *)(&addr), &addrlen) == 0);
-			assert(inet_ntop(addr.sin6_family, &(addr.sin6_addr), ipstr, MESSAGE_BUFFER_SIZE) != NULL);
+
+			ret = getpeername(fd, (struct sockaddr *)(&addr), &addrlen);
+			assert(ret == 0);
+
+			pret = inet_ntop(addr.sin6_family, &(addr.sin6_addr), ipstr, MESSAGE_BUFFER_SIZE);
+			assert(pret != NULL);
+
 			port = (int)ntohs(addr.sin6_port);
 		} else {
 			struct sockaddr_in addr;
 			addrlen = sizeof(addr);
-			assert(getpeername(fd, (struct sockaddr *)(&addr), &addrlen) == 0);
-			assert(inet_ntop(addr.sin_family, &(addr.sin_addr), ipstr, MESSAGE_BUFFER_SIZE) != NULL);
+
+			ret = getpeername(fd, (struct sockaddr *)(&addr), &addrlen);
+			assert(ret == 0);
+
+			pret = inet_ntop(addr.sin_family, &(addr.sin_addr), ipstr, MESSAGE_BUFFER_SIZE);
+			assert(pret != NULL);
+
 			port = (int)ntohs(addr.sin_port);
 		}
 
 		/* Fill initial client data and add it to the database. */
 		srv_make_new_client(&cli, slot, fd, ipstr, port);
-		assert(db_add_client(srv->db, &cli) == 0);
+		ret = db_add_client(srv->db, &cli);
+		assert(ret == 0);
 
 		/* Log new connection. */
 		snprintf(msg, MESSAGE_BUFFER_SIZE, "CLID_%lld %s:%d connected on file descriptor %d",
@@ -3544,29 +3632,41 @@ static void srv_inactive_cb(void *cli_, void *srv_)
 {
 	struct server *srv;
 	struct db_client *cli;
+	int ret;
 
 	cli = cli_;
 	srv = srv_;
 
-	assert(db_update_client_ping(srv->db, cli->id_client) == 0);
+	ret = db_update_client_ping(srv->db, cli->id_client);
+	assert(ret == 0);
+
 	srv_fmt_enq(srv, cli, "PING %s\r\n", srv->config.server_name);
 }
 
 static void srv_db_maintenance(struct server *srv)
 {
-	assert(db_clear_whowas(srv->db, srv->config.whowas_timeout_seconds) == 0);
-	assert(db_del_expired_forbidden_nicks(srv->db) == 0);
+	int ret;
+
+	ret = db_clear_whowas(srv->db, srv->config.whowas_timeout_seconds);
+	assert(ret == 0);
+
+	ret = db_del_expired_forbidden_nicks(srv->db);
+	assert(ret == 0);
 }
 
 void srv_main_loop(struct server *srv)
 {
+	int ret;
+
 	while (! srv->dyndata.die_flag) {
 
 		/* Disconnect clients due to PING timeout. */
-		assert(db_run_on_ping_timeout_clients(srv->db, srv->config.timeout_seconds, srv_ping_timeout_cb, srv) == 0);
+		ret = db_run_on_ping_timeout_clients(srv->db, srv->config.timeout_seconds, srv_ping_timeout_cb, srv);
+		assert(ret == 0);
 
 		/* Enqueue pings to inactive clients. */
-		assert(db_run_on_inactive_clients(srv->db, srv->config.timeout_seconds, srv_inactive_cb, srv) == 0);
+		ret = db_run_on_inactive_clients(srv->db, srv->config.timeout_seconds, srv_inactive_cb, srv);
+		assert(ret == 0);
 
 		/* Poll sockets. */
 		srv_poll_sockets(srv);

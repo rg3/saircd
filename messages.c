@@ -113,6 +113,7 @@ void init_tokens(struct tokens *t)
 static int tokenize_callout(pcre_callout_block *b)
 {
 	struct tokens *t;
+	int ret;
        
 	t = (struct tokens *)(b->callout_data);
 
@@ -120,10 +121,10 @@ static int tokenize_callout(pcre_callout_block *b)
 	if (t->counter >= MAX_TOKENS)
 		return PCRE_ERROR_CALLOUT;
 
-	assert(pcre_copy_substring(b->subject, b->offset_vector,
-				   b->callout_number + 1, b->callout_number,
-				   t->token[t->counter], MESSAGE_BUFFER_SIZE)
-	       >= 0);
+	ret = pcre_copy_substring(b->subject, b->offset_vector,
+				  b->callout_number + 1, b->callout_number,
+				  t->token[t->counter], MESSAGE_BUFFER_SIZE);
+	assert(ret >= 0);
 	t->counter += 1;
 	return 0;
 }

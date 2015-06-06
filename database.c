@@ -41,8 +41,10 @@
 
 #define PREPARE_IF_STMT_NULL()					\
 	do {							\
-		if (stmt == NULL)				\
-			assert(sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) == SQLITE_OK);	\
+		if (stmt == NULL) {				\
+			ret = sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL); \
+			assert(ret == SQLITE_OK);		\
+		}						\
 	} while (0)
 
 /*
@@ -74,9 +76,11 @@ static void db_bind_channel_data(sqlite3_stmt *stmt, const struct db_channel *in
 static void db_simple_exec(sqlite3 *db, const char *query)
 {
 	char *errmsg;
+	int ret;
 
 	errmsg = NULL;
-	assert(sqlite3_exec(db, query, NULL, NULL, &errmsg) == SQLITE_OK);
+	ret = sqlite3_exec(db, query, NULL, NULL, &errmsg);
+	assert(ret == SQLITE_OK);
 
 	/* In theory, this never happens. */
 	if (errmsg != NULL)
@@ -147,51 +151,96 @@ static void db_fill_whowas_from_row(sqlite3_stmt *stmt, struct db_whowas *out, i
 
 static void db_bind_client_data(sqlite3_stmt *stmt, const struct db_client *in)
 {
-	assert(sqlite3_bind_int64(stmt, 1, in->id_oper) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 2, in->fd) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 3, in->ip, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 4, in->port) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 5, in->orig_nickname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 6, in->nickname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 7, in->username, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 8, in->realname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 9, in->orig_fullname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 10, in->fullname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 11, in->away_flag) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 12, in->away_text, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 13, in->invisible_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 14, in->wallops_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 15, in->restricted_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 16, in->operator_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 17, in->local_operator_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 18, in->server_notices_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 19, in->array_index) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 20, in->regstate) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 21, in->last_activity) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 22, in->last_ping) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 23, in->last_talk) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 24, in->signon_time) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 25, in->is_quitting) == SQLITE_OK);
+	int ret;
+
+	ret = sqlite3_bind_int64(stmt, 1, in->id_oper);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 2, in->fd);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 3, in->ip, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 4, in->port);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 5, in->orig_nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 6, in->nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 7, in->username, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 8, in->realname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 9, in->orig_fullname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 10, in->fullname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 11, in->away_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 12, in->away_text, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 13, in->invisible_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 14, in->wallops_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 15, in->restricted_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 16, in->operator_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 17, in->local_operator_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 18, in->server_notices_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 19, in->array_index);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 20, in->regstate);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 21, in->last_activity);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 22, in->last_ping);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 23, in->last_talk);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 24, in->signon_time);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 25, in->is_quitting);
+	assert(ret == SQLITE_OK);
 }
 
 static void db_bind_channel_data(sqlite3_stmt *stmt, const struct db_channel *in)
 {
-	assert(sqlite3_bind_text(stmt, 1, in->orig_name, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, in->name, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 3, in->topic, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 4, in->key_flag) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 5, in->key, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 6, in->limit_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 7, in->limit_v) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 8, in->anonymous_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 9, in->invite_only_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 10, in->moderated_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 11, in->no_outside_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 12, in->quiet_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 13, in->private_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 14, in->secret_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 15, in->oper_topic_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 16, in->special_flag) == SQLITE_OK);
+	int ret;
+
+	ret = sqlite3_bind_text(stmt, 1, in->orig_name, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, in->name, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 3, in->topic, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 4, in->key_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 5, in->key, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 6, in->limit_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 7, in->limit_v);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 8, in->anonymous_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 9, in->invite_only_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 10, in->moderated_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 11, in->no_outside_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 12, in->quiet_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 13, in->private_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 14, in->secret_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 15, in->oper_topic_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 16, in->special_flag);
+	assert(ret == SQLITE_OK);
 }
 
 /*
@@ -201,8 +250,10 @@ static void db_bind_channel_data(sqlite3_stmt *stmt, const struct db_channel *in
 sqlite3 *db_create(void)
 {
 	sqlite3 *db;
+	int ret;
 
-	assert(sqlite3_open(":memory:", &db) == SQLITE_OK);
+	ret = sqlite3_open(":memory:", &db);
+	assert(ret == SQLITE_OK);
 
 	db_simple_exec(db,
 		"CREATE TABLE forbidden_nick ("
@@ -505,6 +556,8 @@ void db_clear(sqlite3 *db)
 
 void db_close(sqlite3 *db)
 {
+	int ret;
+
 	db_get_forbidden_nick(NULL, 0, NULL);
 	db_get_operator(NULL, 0, NULL);
 	db_get_client(NULL, 0, NULL);
@@ -581,20 +634,23 @@ void db_close(sqlite3 *db)
 	db_run_on_ping_timeout_clients(NULL, 0, NULL, NULL);
 	db_run_on_inactive_clients(NULL, 0, NULL, NULL);
 	db_run_on_clients(NULL, NULL, NULL);
-	assert(sqlite3_close(db) == SQLITE_OK);
+	ret = sqlite3_close(db);
+	assert(ret == SQLITE_OK);
 }
 
 int db_get_forbidden_nick(sqlite3 *db, sqlite3_int64 id, struct db_forbidden_nick *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM forbidden_nick WHERE id_nick = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -610,13 +666,15 @@ int db_get_operator(sqlite3 *db, sqlite3_int64 id, struct db_operator *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM operator WHERE id_oper = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -632,13 +690,15 @@ int db_get_client(sqlite3 *db, sqlite3_int64 id, struct db_client *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM client WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -652,13 +712,15 @@ int db_get_channel(sqlite3 *db, sqlite3_int64 id, struct db_channel *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM channel WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -672,14 +734,17 @@ int db_get_membership(sqlite3 *db, sqlite3_int64 id_channel, sqlite3_int64 id_cl
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM membership WHERE id_channel = ? AND id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, id_client);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -696,13 +761,15 @@ int db_get_banmask(sqlite3 *db, sqlite3_int64 id, struct db_banmask *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM banmask WHERE id_banmask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -719,14 +786,17 @@ int db_get_banmask_by_mask(sqlite3 *db, sqlite3_int64 chan, const char *mask, st
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM banmask WHERE id_channel = ? AND mask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, mask, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -743,13 +813,15 @@ int db_get_exceptmask(sqlite3 *db, sqlite3_int64 id, struct db_exceptmask *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM exceptmask WHERE id_exceptmask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -766,14 +838,17 @@ int db_get_exceptmask_by_mask(sqlite3 *db, sqlite3_int64 chan, const char *mask,
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM exceptmask WHERE id_channel = ? AND mask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, mask, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -790,13 +865,15 @@ int db_get_invitemask(sqlite3 *db, sqlite3_int64 id, struct db_invitemask *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM invitemask WHERE id_invitemask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -813,14 +890,17 @@ int db_get_invitemask_by_mask(sqlite3 *db, sqlite3_int64 chan, const char *mask,
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM invitemask WHERE id_channel = ? AND mask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, mask, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -837,14 +917,17 @@ int db_get_invite(sqlite3 *db, sqlite3_int64 id_channel, sqlite3_int64 id_client
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM invite WHERE id_channel = ? AND id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, id_client);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -859,13 +942,15 @@ int db_get_whowas(sqlite3 *db, sqlite3_int64 id, struct db_whowas *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM whowas WHERE id_whowas = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -878,14 +963,17 @@ int db_add_forbidden_nick(sqlite3 *db, struct db_forbidden_nick *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "INSERT INTO forbidden_nick (nickname, expiry) VALUES (?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, in->nickname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, (sqlite3_int64)(in->expiry)) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, in->nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, (sqlite3_int64)(in->expiry));
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_DONE)
 		return 1;
@@ -897,6 +985,7 @@ int db_add_expiring_forbidden_nick(sqlite3 *db, const char *nickname, int second
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "INSERT INTO forbidden_nick (nickname, expiry) VALUES (?, strftime('%s') + ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -906,8 +995,10 @@ int db_add_expiring_forbidden_nick(sqlite3 *db, const char *nickname, int second
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 2, seconds) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 2, seconds);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -916,13 +1007,15 @@ int db_del_forbidden_nick(sqlite3 *db, const char *nickname)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM forbidden_nick WHERE nickname = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -932,6 +1025,7 @@ int db_del_expired_forbidden_nicks(sqlite3 *db)
 	static sqlite3_stmt *stmt;
 	/* +0 forces integer conversion, so it's not a string comparison. */
 	static const char query[] = "DELETE FROM forbidden_nick WHERE expiry != 0 AND strftime('%s') + 0 >= expiry;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -945,14 +1039,17 @@ int db_nickname_is_forbidden(sqlite3 *db, const char nickname[NICKNAME_BUFFER_SI
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM forbidden_nick WHERE nickname = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0) > 0;
 }
 
@@ -971,14 +1068,17 @@ int db_add_operator(sqlite3 *db, struct db_operator *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "INSERT INTO operator (username, password) VALUES (?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, in->username, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, in->password, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, in->username, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, in->password, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_DONE)
 		return 1;
@@ -998,6 +1098,7 @@ int db_add_client(sqlite3 *db, struct db_client *in)
 		"array_index, regstate, last_activity, last_ping, "
 		"last_talk, signon_time, is_quitting) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "
 		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1017,13 +1118,15 @@ int db_del_client(sqlite3 *db, const struct db_client *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM client WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, in->id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, in->id_client);
+	assert(ret == SQLITE_OK);
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
 
@@ -1040,6 +1143,7 @@ int db_modify_client(sqlite3 *db, const struct db_client *in)
 		"server_notices_flag = ?, array_index = ?, regstate = ?, "
 		"last_activity = ?, last_ping = ?, last_talk = ?, "
 		"signon_time = ?, is_quitting = ? WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1047,7 +1151,8 @@ int db_modify_client(sqlite3 *db, const struct db_client *in)
 
 	sqlite3_reset(stmt);
 	db_bind_client_data(stmt, in);
-	assert(sqlite3_bind_int64(stmt, 26, in->id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 26, in->id_client);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1056,13 +1161,15 @@ int db_update_client_activity(sqlite3 *db, sqlite3_int64 cli)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "UPDATE client SET last_activity = strftime('%s') WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, cli);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1071,13 +1178,15 @@ int db_update_client_ping(sqlite3 *db, sqlite3_int64 cli)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "UPDATE client SET last_ping = strftime('%s') WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, cli);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1092,6 +1201,7 @@ int db_add_channel(sqlite3 *db, struct db_channel *in)
 		"no_outside_flag, quiet_flag, private_flag, secret_flag, "
 		"oper_topic_flag, special_flag) VALUES "
 		"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1111,13 +1221,15 @@ int db_del_channel(sqlite3 *db, const struct db_channel *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM channel WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, in->id_channel) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, in->id_channel);
+	assert(ret == SQLITE_OK);
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
 
@@ -1132,6 +1244,7 @@ int db_modify_channel(sqlite3 *db, const struct db_channel *in)
 		"no_outside_flag = ?, quiet_flag = ?, private_flag = ?, "
 		"secret_flag = ?, oper_topic_flag = ?, special_flag = ? "
 		"WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1139,7 +1252,8 @@ int db_modify_channel(sqlite3 *db, const struct db_channel *in)
 
 	sqlite3_reset(stmt);
 	db_bind_channel_data(stmt, in);
-	assert(sqlite3_bind_int64(stmt, 17, in->id_channel) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 17, in->id_channel);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1148,15 +1262,19 @@ int db_add_banmask(sqlite3 *db, struct db_banmask *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "INSERT INTO banmask (id_channel, orig_mask, mask) VALUES (?, ?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, in->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, in->orig_mask, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 3, in->mask, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, in->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, in->orig_mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 3, in->mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_DONE)
 		return 1;
@@ -1168,15 +1286,19 @@ int db_add_exceptmask(sqlite3 *db, struct db_exceptmask *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "INSERT INTO exceptmask (id_channel, orig_mask, mask) VALUES (?, ?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, in->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, in->orig_mask, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 3, in->mask, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, in->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, in->orig_mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 3, in->mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_DONE)
 		return 1;
@@ -1188,15 +1310,19 @@ int db_add_invitemask(sqlite3 *db, struct db_invitemask *in)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "INSERT INTO invitemask (id_channel, orig_mask, mask) VALUES (?, ?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, in->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, in->orig_mask, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 3, in->mask, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, in->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, in->orig_mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 3, in->mask, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_DONE)
 		return 1;
@@ -1208,14 +1334,17 @@ int db_del_banmask(sqlite3 *db, const struct db_banmask *mask)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM banmask WHERE id_channel = ? AND id_banmask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, mask->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, mask->id_banmask) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, mask->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, mask->id_banmask);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1224,14 +1353,17 @@ int db_del_exceptmask(sqlite3 *db, const struct db_exceptmask *mask)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM exceptmask WHERE id_channel = ? AND id_exceptmask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, mask->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, mask->id_exceptmask) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, mask->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, mask->id_exceptmask);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1240,14 +1372,17 @@ int db_del_invitemask(sqlite3 *db, const struct db_invitemask *mask)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM invitemask WHERE id_channel = ? AND id_invitemask = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, mask->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, mask->id_invitemask) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, mask->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, mask->id_invitemask);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1256,14 +1391,17 @@ int db_count_banmasks(sqlite3 *db, sqlite3_int64 chan)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM banmask WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1271,14 +1409,17 @@ int db_count_exceptmasks(sqlite3 *db, sqlite3_int64 chan)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM exceptmask WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1286,14 +1427,17 @@ int db_count_invitemasks(sqlite3 *db, sqlite3_int64 chan)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM invitemask WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1301,13 +1445,15 @@ int db_get_client_by_fd(sqlite3 *db, int fd, struct db_client *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM client WHERE fd = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int(stmt, 1, fd) == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 1, fd);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -1321,13 +1467,15 @@ int db_get_client_by_nick(sqlite3 *db, const char *nickname, struct db_client *o
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM client WHERE nickname = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, nickname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -1341,13 +1489,15 @@ int db_get_client_by_opid(sqlite3 *db, sqlite3_int64 id, struct db_client *out)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM client WHERE id_oper = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -1361,14 +1511,17 @@ int db_get_operator_id(sqlite3 *db, const char *un, const char *pw, sqlite3_int6
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT id_oper FROM operator WHERE username = ? AND password = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, un, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, pw, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, un, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, pw, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -1382,13 +1535,15 @@ int db_get_channel_by_name(sqlite3 *db, const char *name, struct db_channel *out
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT * FROM channel WHERE name = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		return 1;
@@ -1402,14 +1557,17 @@ int db_count_client_channels(sqlite3 *db, sqlite3_int64 id_client)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM membership WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_client) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, id_client);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1417,14 +1575,17 @@ int db_count_channel_members(sqlite3 *db, sqlite3_int64 id_channel)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM membership WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1436,14 +1597,17 @@ int db_count_visible_members(sqlite3 *db, sqlite3_int64 id_channel)
 		"	membership INNER JOIN client "
 		"	ON membership.id_client = client.id_client "
 		"	WHERE membership.id_channel = ? AND client.invisible_flag = 0;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1451,13 +1615,15 @@ int db_count_channels(sqlite3 *db)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM channel WHERE special_flag = 0;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1465,13 +1631,15 @@ int db_count_clients(sqlite3 *db)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM client;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1479,13 +1647,15 @@ int db_count_client_operators(sqlite3 *db)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "SELECT COUNT(*) FROM client WHERE operator_flag = 1 OR local_operator_flag = 1;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 	return sqlite3_column_int(stmt, 0);
 }
 
@@ -1496,16 +1666,21 @@ int db_add_membership(sqlite3 *db, const struct db_membership *in)
 		"INSERT INTO membership "
 		"(id_channel, id_client, operator_flag, voice_flag) "
 		"VALUES (?, ?, ?, ?);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, in->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, in->id_client) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 3, in->operator_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 4, in->voice_flag) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, in->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, in->id_client);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 3, in->operator_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 4, in->voice_flag);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1517,16 +1692,21 @@ int db_modify_membership(sqlite3 *db, const struct db_membership *in)
 		"UPDATE membership SET "
 		"operator_flag = ?, voice_flag = ? "
 		"WHERE id_channel = ? AND id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int(stmt, 1, in->operator_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 2, in->voice_flag) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 3, in->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 4, in->id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 1, in->operator_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 2, in->voice_flag);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 3, in->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 4, in->id_client);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1535,14 +1715,17 @@ int db_delete_membership(sqlite3 *db, sqlite3_int64 id_channel, sqlite3_int64 id
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM membership WHERE id_channel = ? AND id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, id_client);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1551,13 +1734,15 @@ int db_delete_client_memberships(sqlite3 *db, sqlite3_int64 id_client)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM membership WHERE id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_client);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1595,8 +1780,10 @@ int db_invite_client(sqlite3 *db, sqlite3_int64 id_channel, sqlite3_int64 id_cli
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, id_client);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1605,14 +1792,17 @@ int db_del_invite(sqlite3 *db, sqlite3_int64 id_channel, sqlite3_int64 id_client
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM invite WHERE id_channel = ? AND id_client = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, id_client) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, id_client);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1621,13 +1811,15 @@ int db_clear_all_invites(sqlite3 *db, sqlite3_int64 id_channel)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM invite WHERE id_channel = ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, id_channel) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, id_channel);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1638,17 +1830,23 @@ int db_client_not_banned(sqlite3 *db, const struct db_client *cli, const struct 
 	static const char query[] = "SELECT "
 		"((SELECT COUNT(*) FROM banmask WHERE id_channel = ? AND (? GLOB mask)) = 0) OR "
 		"((SELECT COUNT(*) FROM exceptmask WHERE id_channel = ? AND (? GLOB mask)) > 0);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, cli->fullname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 3, chan->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 4, cli->fullname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, chan->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, cli->fullname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 3, chan->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 4, cli->fullname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 
 	return sqlite3_column_int(stmt, 0);
 }
@@ -1659,6 +1857,7 @@ int db_client_meets_invite_req(sqlite3 *db, const struct db_client *cli, const s
 	static const char query[] = "SELECT "
 		"((SELECT COUNT(*) FROM invitemask WHERE id_channel = ? AND (? GLOB mask)) > 0) OR "
 		"((SELECT COUNT(*) FROM invite WHERE id_channel = ? AND id_client = ?) > 0);";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1668,11 +1867,16 @@ int db_client_meets_invite_req(sqlite3 *db, const struct db_client *cli, const s
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_text(stmt, 2, cli->fullname, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 3, chan->id_channel) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 4, cli->id_client) == SQLITE_OK);
-	assert(sqlite3_step(stmt) == SQLITE_ROW);
+	ret = sqlite3_bind_int64(stmt, 1, chan->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 2, cli->fullname, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 3, chan->id_channel);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 4, cli->id_client);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_step(stmt);
+	assert(ret == SQLITE_ROW);
 
 	return sqlite3_column_int(stmt, 0);
 }
@@ -1762,6 +1966,7 @@ int db_clear_whowas(sqlite3 *db, int seconds)
 {
 	static sqlite3_stmt *stmt;
 	static const char query[] = "DELETE FROM whowas WHERE quit_time <= strftime('%s') - ?;";
+	int ret;
 
 	FINALIZE_IF_DB_NULL();
 
@@ -1771,7 +1976,8 @@ int db_clear_whowas(sqlite3 *db, int seconds)
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int(stmt, 1, seconds) == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 1, seconds);
+	assert(ret == SQLITE_OK);
 
 	return (sqlite3_step(stmt) != SQLITE_DONE);
 }
@@ -1793,8 +1999,10 @@ int db_run_on_members_except(sqlite3 *db, sqlite3_int64 chan, sqlite3_int64 cli,
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, cli);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -1842,8 +2050,10 @@ int db_run_on_neighbors(sqlite3 *db, sqlite3_int64 cli, db_callback callback, vo
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, cli) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, cli);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, cli);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -1884,8 +2094,10 @@ int db_run_on_non_anon_neighbors(sqlite3 *db, sqlite3_int64 cli, db_callback cal
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, cli) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, cli);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, cli);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -1925,8 +2137,10 @@ int db_run_on_anon_neighbors(sqlite3 *db, sqlite3_int64 cli, db_callback callbac
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, cli) == SQLITE_OK);
-	assert(sqlite3_bind_int64(stmt, 2, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, cli);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 2, cli);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -1957,7 +2171,8 @@ int db_run_on_banmasks(sqlite3 *db, sqlite3_int64 chan, db_callback callback, vo
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -1991,7 +2206,8 @@ int db_run_on_exceptmasks(sqlite3 *db, sqlite3_int64 chan, db_callback callback,
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -2025,7 +2241,8 @@ int db_run_on_invitemasks(sqlite3 *db, sqlite3_int64 chan, db_callback callback,
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, chan) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, chan);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -2059,8 +2276,10 @@ int db_run_on_whowas(sqlite3 *db, const char *nick, int count, db_callback callb
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_text(stmt, 1, nick, -1, SQLITE_STATIC) == SQLITE_OK);
-	assert(sqlite3_bind_int(stmt, 2, count) == SQLITE_OK);
+	ret = sqlite3_bind_text(stmt, 1, nick, -1, SQLITE_STATIC);
+	assert(ret == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 2, count);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -2122,7 +2341,8 @@ int db_run_on_client_channels(sqlite3 *db, sqlite3_int64 cli, db_callback callba
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int64(stmt, 1, cli) == SQLITE_OK);
+	ret = sqlite3_bind_int64(stmt, 1, cli);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -2152,7 +2372,8 @@ int db_run_on_ping_timeout_clients(sqlite3 *db, int seconds, db_callback callbac
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int(stmt, 1, seconds) == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 1, seconds);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);
@@ -2182,7 +2403,8 @@ int db_run_on_inactive_clients(sqlite3 *db, int seconds, db_callback callback, v
 	PREPARE_IF_STMT_NULL();
 
 	sqlite3_reset(stmt);
-	assert(sqlite3_bind_int(stmt, 1, seconds) == SQLITE_OK);
+	ret = sqlite3_bind_int(stmt, 1, seconds);
+	assert(ret == SQLITE_OK);
 
 	for (;;) {
 		ret = sqlite3_step(stmt);

@@ -939,6 +939,7 @@ void test_memberships(void)
 	struct db_membership ms1;
 	struct db_membership ms2;
 	int counter;
+	int ret;
 
 	make_simple_client(&cli1, 50, "192.168.1.100", 64000, "CLI01");
 	make_simple_client(&cli2, 51, "192.168.1.101", 64001, "CLI02");
@@ -947,11 +948,16 @@ void test_memberships(void)
 	make_simple_channel(&chan1, "#test01");
 	make_simple_channel(&chan2, "#Test02");
 
-	assert(db_add_client(db, &cli1) == 0);
-	assert(db_add_client(db, &cli2) == 0);
-	assert(db_add_client(db, &cli3) == 0);
-	assert(db_add_channel(db, &chan1) == 0);
-	assert(db_add_channel(db, &chan2) == 0);
+	ret = db_add_client(db, &cli1);
+	assert(ret == 0);
+	ret = db_add_client(db, &cli2);
+	assert(ret == 0);
+	ret = db_add_client(db, &cli3);
+	assert(ret == 0);
+	ret = db_add_channel(db, &chan1);
+	assert(ret == 0);
+	ret = db_add_channel(db, &chan2);
+	assert(ret == 0);
 
 	memset(&ms1, 0, sizeof(struct db_membership));
 	memset(&ms2, 0, sizeof(struct db_membership));
@@ -1009,7 +1015,8 @@ void test_memberships(void)
 	ms1.id_channel = chan1.id_channel;
 	ms1.id_client = cli2.id_client;
 
-	assert(db_add_membership(db, &ms1) == 0);
+	ret = db_add_membership(db, &ms1);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_count_channel_members(db, chan1.id_channel) != 2) {
@@ -1053,7 +1060,8 @@ void test_memberships(void)
 		++tests_passed;
 
 	chan1.oper_topic_flag = 0;
-	assert(db_modify_channel(db, &chan1) == 0);
+	ret = db_modify_channel(db, &chan1);
+	assert(ret == 0);
 
 	++tests_counter;
 	if ((! db_client_may_set_topic(db, &cli1, &chan1)) ||
@@ -1076,7 +1084,8 @@ void test_memberships(void)
 	ms1.id_channel = chan2.id_channel;
 	ms1.id_client = cli1.id_client;
 
-	assert(db_add_membership(db, &ms1) == 0);
+	ret = db_add_membership(db, &ms1);
+	assert(ret == 0);
 
 	++tests_counter;
 	counter = 0;
@@ -1103,12 +1112,15 @@ void test_invites(void)
 	struct db_invite i1;
 	struct db_membership memb;
 	struct db_invitemask im;
+	int ret;
 
 	make_simple_client(&cli, 80, "192.168.1.110", 64010, "inv01"); 
 	make_simple_channel(&chan, "#invitechan");
 
-	assert(db_add_client(db, &cli) == 0);
-	assert(db_add_channel(db, &chan) == 0);
+	ret = db_add_client(db, &cli);
+	assert(ret == 0);
+	ret = db_add_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_invite_client(db, chan.id_channel, cli.id_client) != 0) {
@@ -1134,7 +1146,8 @@ void test_invites(void)
 	} else
 		++tests_passed;
 
-	assert(db_invite_client(db, chan.id_channel, cli.id_client) == 0);
+	ret = db_invite_client(db, chan.id_channel, cli.id_client);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_clear_all_invites(db, chan.id_channel) != 0 ||
@@ -1155,7 +1168,8 @@ void test_invites(void)
 	memb.id_channel = chan.id_channel;
 	memb.id_client = cli.id_client;
 	memb.voice_flag = 1;
-	assert(db_add_membership(db, &memb) == 0);
+	ret = db_add_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_can_invite(db, &cli, &chan)) {
@@ -1165,7 +1179,8 @@ void test_invites(void)
 		++tests_passed;
 
 	chan.invite_only_flag = 1;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_can_invite(db, &cli, &chan)) {
@@ -1175,7 +1190,8 @@ void test_invites(void)
 		++tests_passed;
 
 	memb.operator_flag = 1;
-	assert(db_modify_membership(db, &memb) == 0);
+	ret = db_modify_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_can_invite(db, &cli, &chan)) {
@@ -1184,9 +1200,11 @@ void test_invites(void)
 	} else
 		++tests_passed;
 
-	assert(db_delete_membership(db, chan.id_channel, cli.id_client) == 0);
+	ret = db_delete_membership(db, chan.id_channel, cli.id_client);
+	assert(ret == 0);
 	chan.invite_only_flag = 0;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_meets_invite_req(db, &cli, &chan)) {
@@ -1196,7 +1214,8 @@ void test_invites(void)
 		++tests_passed;
 
 	chan.invite_only_flag = 1;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_meets_invite_req(db, &cli, &chan)) {
@@ -1209,7 +1228,8 @@ void test_invites(void)
 	snprintf(im.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@192.168.1.*");
 	strcpy(im.mask, im.orig_mask);
 	irclower(im.mask);
-	assert(db_add_invitemask(db, &im) == 0);
+	ret = db_add_invitemask(db, &im);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_meets_invite_req(db, &cli, &chan)) {
@@ -1218,8 +1238,10 @@ void test_invites(void)
 	} else
 		++tests_passed;
 
-	assert(db_del_invitemask(db, &im) == 0);
-	assert(db_invite_client(db, chan.id_channel, cli.id_client) == 0);
+	ret = db_del_invitemask(db, &im);
+	assert(ret == 0);
+	ret = db_invite_client(db, chan.id_channel, cli.id_client);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_meets_invite_req(db, &cli, &chan)) {
@@ -1230,7 +1252,8 @@ void test_invites(void)
 
 	memb.id_channel = chan.id_channel;
 	memb.id_client = cli.id_client;
-	assert(db_add_membership(db, &memb) == 0);
+	ret = db_add_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_meets_invite_req(db, &cli, &chan)) {
@@ -1246,12 +1269,15 @@ void test_bans(void)
 	struct db_channel chan;
 	struct db_banmask bm;
 	struct db_exceptmask em;
+	int ret;
 
 	make_simple_client(&cli, 150, "192.168.1.120", 64020, "Joiner"); 
 	make_simple_channel(&chan, "#BanChan");
 
-	assert(db_add_client(db, &cli) == 0);
-	assert(db_add_channel(db, &chan) == 0);
+	ret = db_add_client(db, &cli);
+	assert(ret == 0);
+	ret = db_add_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_not_banned(db, &cli, &chan)) {
@@ -1264,7 +1290,8 @@ void test_bans(void)
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@192.168.2.*");
 	strcpy(bm.mask, bm.orig_mask);
 	irclower(bm.mask);
-	assert(db_add_banmask(db, &bm) == 0);
+	ret = db_add_banmask(db, &bm);
+	assert(ret == 0);
 	
 	++tests_counter;
 	if (! db_client_not_banned(db, &cli, &chan)) {
@@ -1276,7 +1303,8 @@ void test_bans(void)
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@192.168.1.*");
 	strcpy(bm.mask, bm.orig_mask);
 	irclower(bm.mask);
-	assert(db_add_banmask(db, &bm) == 0);
+	ret = db_add_banmask(db, &bm);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_not_banned(db, &cli, &chan)) {
@@ -1289,7 +1317,8 @@ void test_bans(void)
 	snprintf(em.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@10.*");
 	strcpy(em.mask, em.orig_mask);
 	irclower(em.mask);
-	assert(db_add_exceptmask(db, &em) == 0);
+	ret = db_add_exceptmask(db, &em);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_not_banned(db, &cli, &chan)) {
@@ -1301,7 +1330,8 @@ void test_bans(void)
 	snprintf(em.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*join*@*");
 	strcpy(em.mask, em.orig_mask);
 	irclower(em.mask);
-	assert(db_add_exceptmask(db, &em) == 0);
+	ret = db_add_exceptmask(db, &em);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_not_banned(db, &cli, &chan)) {
@@ -1318,19 +1348,23 @@ void test_may_join(void)
 	struct db_membership memb;
 	struct db_banmask bm;
 	struct db_exceptmask em;
+	int ret;
 
 	make_simple_client(&cli, 60, "192.168.21.120", 64020, "tron");
 	make_simple_channel(&chan, "#core");
 
-	assert(db_add_client(db, &cli) == 0);
-	assert(db_add_channel(db, &chan) == 0);
+	ret = db_add_client(db, &cli);
+	assert(ret == 0);
+	ret = db_add_channel(db, &chan);
+	assert(ret == 0);
 
 	memb.id_channel = chan.id_channel;
 	memb.id_client = cli.id_client;
 	memb.operator_flag = 0;
 	memb.voice_flag = 0;
 
-	assert(db_add_membership(db, &memb) == 0);
+	ret = db_add_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != -1) {
@@ -1339,7 +1373,8 @@ void test_may_join(void)
 	} else
 		++tests_passed;
 
-	assert(db_delete_membership(db, memb.id_channel, memb.id_client) == 0);
+	ret = db_delete_membership(db, memb.id_channel, memb.id_client);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != 0) {
@@ -1351,7 +1386,8 @@ void test_may_join(void)
 	chan.key_flag = 1;
 	snprintf(chan.key, MESSAGE_BUFFER_SIZE, "%s", "p4ssw0rd");
 
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != ERR_BADCHANNELKEY) {
@@ -1375,14 +1411,16 @@ void test_may_join(void)
 		++tests_passed;
 
 	chan.key_flag = 0;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	bm.id_channel = chan.id_channel;
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "TRON*!*@*");
 	strcpy(bm.mask, bm.orig_mask);
 	irclower(bm.mask);
 
-	assert(db_add_banmask(db, &bm) == 0);
+	ret = db_add_banmask(db, &bm);
+	assert(ret == 0);
 	
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != ERR_BANNEDFROMCHAN) {
@@ -1396,7 +1434,8 @@ void test_may_join(void)
 	strcpy(em.mask, em.orig_mask);
 	irclower(em.mask);
 
-	assert(db_add_exceptmask(db, &em) == 0);
+	ret = db_add_exceptmask(db, &em);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != 0) {
@@ -1405,8 +1444,10 @@ void test_may_join(void)
 	} else
 		++tests_passed;
 
-	assert(db_del_exceptmask(db, &em) == 0);
-	assert(db_invite_client(db, chan.id_channel, cli.id_client) == 0);
+	ret = db_del_exceptmask(db, &em);
+	assert(ret == 0);
+	ret = db_invite_client(db, chan.id_channel, cli.id_client);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != 0) {
@@ -1415,8 +1456,10 @@ void test_may_join(void)
 	} else
 		++tests_passed;
 
-	assert(db_add_membership(db, &memb) == 0);
-	assert(db_delete_membership(db, memb.id_channel, memb.id_client) == 0);
+	ret = db_add_membership(db, &memb);
+	assert(ret == 0);
+	ret = db_delete_membership(db, memb.id_channel, memb.id_client);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_join(db, &cli, &chan, NULL) != ERR_BANNEDFROMCHAN) {
@@ -1432,13 +1475,16 @@ void test_may_talk(void)
 	struct db_client cli;
 	struct db_membership memb;
 	struct db_banmask bm;
+	int ret;
 
 	make_simple_client(&cli, 70, "192.168.21.130", 64030, "George6");
 	make_simple_channel(&chan, "#Radio");
 	chan.no_outside_flag = 0;
 
-	assert(db_add_client(db, &cli) == 0);
-	assert(db_add_channel(db, &chan) == 0);
+	ret = db_add_client(db, &cli);
+	assert(ret == 0);
+	ret = db_add_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_may_talk(db, &cli, &chan)) {
@@ -1448,7 +1494,8 @@ void test_may_talk(void)
 		++tests_passed;
 
 	chan.moderated_flag = 1;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_talk(db, &cli, &chan)) {
@@ -1459,7 +1506,8 @@ void test_may_talk(void)
 
 	chan.moderated_flag = 0;
 	chan.no_outside_flag = 1;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_talk(db, &cli, &chan)) {
@@ -1469,14 +1517,16 @@ void test_may_talk(void)
 		++tests_passed;
 
 	chan.no_outside_flag = 0;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	bm.id_channel = chan.id_channel;
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*6*@*");
 	strcpy(bm.mask, bm.orig_mask);
 	irclower(bm.mask);
 
-	assert(db_add_banmask(db, &bm) == 0);
+	ret = db_add_banmask(db, &bm);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_talk(db, &cli, &chan)) {
@@ -1489,7 +1539,8 @@ void test_may_talk(void)
 	memb.id_channel = chan.id_channel;
 	memb.id_client = cli.id_client;
 
-	assert(db_add_membership(db, &memb) == 0);
+	ret = db_add_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_talk(db, &cli, &chan)) {
@@ -1499,8 +1550,10 @@ void test_may_talk(void)
 		++tests_passed;
 
 	chan.no_outside_flag = 1;
-	assert(db_modify_channel(db, &chan) == 0);
-	assert(db_del_banmask(db, &bm) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
+	ret = db_del_banmask(db, &bm);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_may_talk(db, &cli, &chan)) {
@@ -1510,7 +1563,8 @@ void test_may_talk(void)
 		++tests_passed;
 
 	chan.moderated_flag = 1;
-	assert(db_modify_channel(db, &chan) == 0);
+	ret = db_modify_channel(db, &chan);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_client_may_talk(db, &cli, &chan)) {
@@ -1520,7 +1574,8 @@ void test_may_talk(void)
 		++tests_passed;
 
 	memb.operator_flag = 1;
-	assert(db_modify_membership(db, &memb) == 0);
+	ret = db_modify_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_may_talk(db, &cli, &chan)) {
@@ -1531,7 +1586,8 @@ void test_may_talk(void)
 
 	memb.operator_flag = 0;
 	memb.voice_flag = 1;
-	assert(db_modify_membership(db, &memb) == 0);
+	ret = db_modify_membership(db, &memb);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (! db_client_may_talk(db, &cli, &chan)) {
@@ -1594,6 +1650,7 @@ void non_anonymous_callback(void *row, void *extra)
 void test_neighborhood(void)
 {
 	int counter;
+	int ret;
 
 	make_simple_client(&me, 100, "10.10.210.1", 64100, "roland");
 	make_simple_client(&oper, 101, "10.10.210.2", 64101, "god");
@@ -1608,47 +1665,63 @@ void test_neighborhood(void)
 	debug_ch.quiet_flag = 1;
 	anon_ch.anonymous_flag = 1;
 
-	assert(db_add_client(db, &me) == 0);
-	assert(db_add_client(db, &oper) == 0);
-	assert(db_add_client(db, &brother) == 0);
-	assert(db_add_client(db, &friend) == 0);
-	assert(db_add_client(db, &foe) == 0);
-	assert(db_add_channel(db, &debug_ch) == 0);
-	assert(db_add_channel(db, &public_ch) == 0);
-	assert(db_add_channel(db, &anon_ch) == 0);
+	ret = db_add_client(db, &me);
+	assert(ret == 0);
+	ret = db_add_client(db, &oper);
+	assert(ret == 0);
+	ret = db_add_client(db, &brother);
+	assert(ret == 0);
+	ret = db_add_client(db, &friend);
+	assert(ret == 0);
+	ret = db_add_client(db, &foe);
+	assert(ret == 0);
+	ret = db_add_channel(db, &debug_ch);
+	assert(ret == 0);
+	ret = db_add_channel(db, &public_ch);
+	assert(ret == 0);
+	ret = db_add_channel(db, &anon_ch);
+	assert(ret == 0);
 
 	memset(&m, 0, sizeof(m));
 	m.id_client = me.id_client;
 
 	/* me */
 	m.id_channel = debug_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 	m.id_channel = public_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 	m.id_channel = anon_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 
 	/* oper */
 	m.id_client = oper.id_client;
 	m.id_channel = debug_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 
 	/* brother */
 	m.id_client = brother.id_client;
 	m.id_channel = public_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 	m.id_channel = anon_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 
 	/* friend */
 	m.id_client = friend.id_client;
 	m.id_channel = public_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 
 	/* foe */
 	m.id_client = foe.id_client;
 	m.id_channel = anon_ch.id_channel;
-	assert(db_add_membership(db, &m) == 0);
+	ret = db_add_membership(db, &m);
+	assert(ret == 0);
 
 	++tests_counter;
 	if (db_run_on_anon_neighbors(db, me.id_client, anonymous_callback, NULL) != 0) {
@@ -1682,12 +1755,15 @@ struct db_client simul3;
 
 void test_simultaneous_callback(void *row, void *extra)
 {
-	int *counter;
-	counter = extra;
+	int *counter = extra;
+	int ret;
 
-	assert(db_del_client(db, row) == 0);
-	assert(db_del_client(db, &simul1) == 0);
-	assert(db_del_client(db, &simul3) == 0);
+	ret = db_del_client(db, row);
+	assert(ret == 0);
+	ret = db_del_client(db, &simul1);
+	assert(ret == 0);
+	ret = db_del_client(db, &simul3);
+	assert(ret == 0);
 
 	++(*counter);
 }
@@ -1695,6 +1771,7 @@ void test_simultaneous_callback(void *row, void *extra)
 void test_simultaneous(void)
 {
 	int counter;
+	int ret;
 
 	/*
 	 * The following test will run a query and delete rows from the result
@@ -1710,10 +1787,14 @@ void test_simultaneous(void)
 	simul2.wallops_flag = 1;
 	simul3.wallops_flag = 1;
 
-	assert(db_add_client(db, &simul0) == 0);
-	assert(db_add_client(db, &simul1) == 0);
-	assert(db_add_client(db, &simul2) == 0);
-	assert(db_add_client(db, &simul3) == 0);
+	ret = db_add_client(db, &simul0);
+	assert(ret == 0);
+	ret = db_add_client(db, &simul1);
+	assert(ret == 0);
+	ret = db_add_client(db, &simul2);
+	assert(ret == 0);
+	ret = db_add_client(db, &simul3);
+	assert(ret == 0);
 
 	counter = 0;
 	++tests_counter;
@@ -1779,6 +1860,7 @@ void inactive_cb(void *row, void *extra)
 void test_activity(void)
 {
 	int counter;
+	int ret;
 
 	db_clear(db);
 
@@ -1799,16 +1881,23 @@ void test_activity(void)
 	inactive.last_ping = 0;
 	inactive.last_activity = time(NULL) - 31;
 
-	assert(db_add_client(db, &writer) == 0);
-	assert(db_add_client(db, &pingout) == 0);
-	assert(db_add_client(db, &nowait) == 0);
-	assert(db_add_client(db, &inactive) == 0);
+	ret = db_add_client(db, &writer);
+	assert(ret == 0);
+	ret = db_add_client(db, &pingout);
+	assert(ret == 0);
+	ret = db_add_client(db, &nowait);
+	assert(ret == 0);
+	ret = db_add_client(db, &inactive);
+	assert(ret == 0);
 
-	assert(db_run_on_ping_timeout_clients(db, 30, ping_timeout_cb, NULL) == 0);
-	assert(db_run_on_inactive_clients(db, 30, inactive_cb, NULL) == 0);
+	ret = db_run_on_ping_timeout_clients(db, 30, ping_timeout_cb, NULL);
+	assert(ret == 0);
+	ret = db_run_on_inactive_clients(db, 30, inactive_cb, NULL);
+	assert(ret == 0);
 
 	counter = 0;
-	assert(db_run_on_clients(db, row_count_callback, &counter) == 0);
+	ret = db_run_on_clients(db, row_count_callback, &counter);
+	assert(ret == 0);
 	++tests_counter;
 	if (counter != 4) {
 		printf("Unexpected client count in all-clients callback\n");

@@ -158,13 +158,18 @@ int main()
 	int i;
 	int pipefd[2];
 	ssize_t l;
+	int ret;
+	ssize_t wret;
 
 	struct reader r;
 	struct buffer b;
 
-	assert(pipe(pipefd) == 0);
-	assert(nonblock(pipefd[0]) == 0);
-	assert(buffer_create(&b, MAX_MESSAGE_LEN) == 0);
+	ret = pipe(pipefd);
+	assert(ret == 0);
+	ret = nonblock(pipefd[0]);
+	assert(ret == 0);
+	ret = buffer_create(&b, MAX_MESSAGE_LEN);
+	assert(ret == 0);
 	reader_init(&r, pipefd + 0, test_callback, &b);
 
 	init_counters();
@@ -172,7 +177,8 @@ int main()
 
 	for (i = 0; blocks[i] != NULL; ++i) {
 		l = (ssize_t)strlen(blocks[i]);
-		assert(write(pipefd[1], blocks[i], l) == l);
+		wret = write(pipefd[1], blocks[i], l);
+		assert(wret == l);
 		read_and_callback(&r, NULL);
 	}
 
@@ -186,6 +192,7 @@ int main()
 		++tests_passed;
 
 	close(pipefd[0]);
-	assert(buffer_destroy(&b) == 0);
+	ret = buffer_destroy(&b);
+	assert(ret == 0);
 	return tests_summary();
 }

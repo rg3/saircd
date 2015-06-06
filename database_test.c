@@ -103,7 +103,7 @@ void test_add_del_forbidden_nicks(void)
 {
 	struct db_forbidden_nick fn;
 
-	strcpy(fn.nickname, "nobody");
+	xstrlcpy(fn.nickname, "nobody", sizeof(fn.nickname));
 	fn.expiry = 0;
 
 	++tests_counter;
@@ -161,8 +161,8 @@ void test_add_get_operator(void)
 	struct db_operator op;
 	sqlite3_int64 aux;
 
-	strcpy(op.username, "oper1");
-	strcpy(op.password, "pass1");
+	xstrlcpy(op.username, "oper1", sizeof(op.username));
+	xstrlcpy(op.password, "pass1", sizeof(op.password));
 
 	++tests_counter;
 	if (db_add_operator(db, &op) != 0) {
@@ -217,20 +217,20 @@ void test_add_get_client(void)
 
 	char orig_nickname[NICKNAME_BUFFER_SIZE];
 
-	strcpy(orig_nickname, "cLiEnT1");
+	xstrlcpy(orig_nickname, "cLiEnT1", sizeof(orig_nickname));
 
 	memset(&cli, 0, sizeof(cli));
 	cli.fd = fdval;
-	strcpy(cli.ip, "192.168.1.51");
+	xstrlcpy(cli.ip, "192.168.1.51", sizeof(cli.ip));
 	cli.port = 32767;
 	cli.regstate = 9;
-	strcpy(cli.orig_nickname, orig_nickname);
-	strcpy(cli.nickname, cli.orig_nickname);
+	xstrlcpy(cli.orig_nickname, orig_nickname, sizeof(cli.orig_nickname));
+	xstrlcpy(cli.nickname, cli.orig_nickname, sizeof(cli.nickname));
 	irclower(cli.nickname);
-	strcpy(cli.username, "resu");
-	strcpy(cli.realname, "Iñigo Montoya"); /* You killed my father. Prepare to die. */
+	xstrlcpy(cli.username, "resu", sizeof(cli.username));
+	xstrlcpy(cli.realname, "Iñigo Montoya", sizeof(cli.realname)); /* You killed my father. Prepare to die. */
 	sprintf(cli.orig_fullname, "%s!%s@%s", orig_nickname, cli.username, cli.ip);
-	strcpy(cli.fullname, cli.orig_fullname);
+	xstrlcpy(cli.fullname, cli.orig_fullname, sizeof(cli.fullname));
 	irclower(cli.fullname);
 	cli.away_flag = 0;
 	cli.away_text[0] = '\0';
@@ -379,7 +379,7 @@ void test_get_modify_client(void)
 		++tests_passed;
 
 	cli.away_flag = 1;
-	strcpy(cli.away_text, "afk, tornado");
+	xstrlcpy(cli.away_text, "afk, tornado", sizeof(cli.away_text));
 	cli.invisible_flag = 0;
 	cli.wallops_flag = 1;
 	cli.restricted_flag = 0;
@@ -617,10 +617,10 @@ void test_channel_masks(void)
 	int counter;
 
 	memset(&chan, 0, sizeof(chan));
-	strcpy(chan.orig_name, "#ABC123[]\\~");
-	strcpy(chan.name, chan.orig_name);
+	xstrlcpy(chan.orig_name, "#ABC123[]\\~", sizeof(chan.orig_name));
+	xstrlcpy(chan.name, chan.orig_name, sizeof(chan.name));
 	irclower(chan.name);
-	strcpy(chan.topic, "Channel topic");
+	xstrlcpy(chan.topic, "Channel topic", sizeof(chan.topic));
 	chan.key_flag = 0;
 	chan.key[0] = '\0';
 	chan.limit_flag = 0;
@@ -673,7 +673,7 @@ void test_channel_masks(void)
 		++tests_passed;
 
 	chan.key_flag = 1;
-	strcpy(chan.key, "TeSt");
+	xstrlcpy(chan.key, "TeSt", sizeof(chan.key));
 	chan.limit_flag = 0;
 	chan.limit_v = 0;
 	chan.anonymous_flag = 1;
@@ -707,8 +707,8 @@ void test_channel_masks(void)
 
 	memset(&bm1, 0, sizeof(bm1));
 	bm1.id_channel = chan.id_channel;
-	strcpy(bm1.orig_mask, "USER*!*@*");
-	strcpy(bm1.mask, bm1.orig_mask);
+	xstrlcpy(bm1.orig_mask, "USER*!*@*", sizeof(bm1.orig_mask));
+	xstrlcpy(bm1.mask, bm1.orig_mask, sizeof(bm1.mask));
 	irclower(bm1.mask);
 
 	++tests_counter;
@@ -770,8 +770,8 @@ void test_channel_masks(void)
 
 	memset(&em1, 0, sizeof(em1));
 	em1.id_channel = chan.id_channel;
-	strcpy(em1.orig_mask, "*!*@192.168.1.*");
-	strcpy(em1.mask, em1.orig_mask);
+	xstrlcpy(em1.orig_mask, "*!*@192.168.1.*", sizeof(em1.orig_mask));
+	xstrlcpy(em1.mask, em1.orig_mask, sizeof(em1.mask));
 	irclower(em1.mask);
 
 	++tests_counter;
@@ -833,8 +833,8 @@ void test_channel_masks(void)
 
 	memset(&im1, 0, sizeof(im1));
 	im1.id_channel = chan.id_channel;
-	strcpy(im1.orig_mask, "*!*vampire*@*");
-	strcpy(im1.mask, im1.orig_mask);
+	xstrlcpy(im1.orig_mask, "*!*vampire*@*", sizeof(im1.orig_mask));
+	xstrlcpy(im1.mask, im1.orig_mask, sizeof(im1.mask));
 	irclower(im1.mask);
 
 	++tests_counter;
@@ -908,10 +908,10 @@ void make_simple_client(struct db_client *cli, int fd, const char *ip, int port,
 	snprintf(cli->ip, MESSAGE_BUFFER_SIZE, "%s", ip);
 	cli->port = port;
 	snprintf(cli->orig_nickname, NICKNAME_BUFFER_SIZE, "%s", nick);
-	strcpy(cli->nickname, cli->orig_nickname);
+	xstrlcpy(cli->nickname, cli->orig_nickname, sizeof(cli->nickname));
 	irclower(cli->nickname);
-	strcpy(cli->username, cli->nickname);
-	strcpy(cli->realname, cli->nickname);
+	xstrlcpy(cli->username, cli->nickname, sizeof(cli->username));
+	xstrlcpy(cli->realname, cli->nickname, sizeof(cli->realname));
 	snprintf(cli->orig_fullname, MESSAGE_BUFFER_SIZE, "%s!%s@%s", cli->orig_nickname, cli->username, cli->ip);
 	snprintf(cli->fullname, MESSAGE_BUFFER_SIZE, "%s!%s@%s", cli->nickname, cli->username, cli->ip);
 	cli->invisible_flag = 1;
@@ -921,7 +921,7 @@ void make_simple_channel(struct db_channel *chan, const char *name)
 {
 	memset(chan, 0, sizeof(struct db_channel));
 	snprintf(chan->orig_name, CHANNEL_BUFFER_SIZE, "%s", name);
-	strcpy(chan->name, chan->orig_name);
+	xstrlcpy(chan->name, chan->orig_name, sizeof(chan->name));
 	irclower(chan->name);
 
 	/* Classic +nt modes. */
@@ -1226,7 +1226,7 @@ void test_invites(void)
 
 	im.id_channel = chan.id_channel;
 	snprintf(im.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@192.168.1.*");
-	strcpy(im.mask, im.orig_mask);
+	xstrlcpy(im.mask, im.orig_mask, sizeof(im.mask));
 	irclower(im.mask);
 	ret = db_add_invitemask(db, &im);
 	assert(ret == 0);
@@ -1288,7 +1288,7 @@ void test_bans(void)
 
 	bm.id_channel = chan.id_channel;
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@192.168.2.*");
-	strcpy(bm.mask, bm.orig_mask);
+	xstrlcpy(bm.mask, bm.orig_mask, sizeof(bm.mask));
 	irclower(bm.mask);
 	ret = db_add_banmask(db, &bm);
 	assert(ret == 0);
@@ -1301,7 +1301,7 @@ void test_bans(void)
 		++tests_passed;
 
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@192.168.1.*");
-	strcpy(bm.mask, bm.orig_mask);
+	xstrlcpy(bm.mask, bm.orig_mask, sizeof(bm.mask));
 	irclower(bm.mask);
 	ret = db_add_banmask(db, &bm);
 	assert(ret == 0);
@@ -1315,7 +1315,7 @@ void test_bans(void)
 
 	em.id_channel = chan.id_channel;
 	snprintf(em.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*@10.*");
-	strcpy(em.mask, em.orig_mask);
+	xstrlcpy(em.mask, em.orig_mask, sizeof(em.mask));
 	irclower(em.mask);
 	ret = db_add_exceptmask(db, &em);
 	assert(ret == 0);
@@ -1328,7 +1328,7 @@ void test_bans(void)
 		++tests_passed;
 
 	snprintf(em.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*join*@*");
-	strcpy(em.mask, em.orig_mask);
+	xstrlcpy(em.mask, em.orig_mask, sizeof(em.mask));
 	irclower(em.mask);
 	ret = db_add_exceptmask(db, &em);
 	assert(ret == 0);
@@ -1416,7 +1416,7 @@ void test_may_join(void)
 
 	bm.id_channel = chan.id_channel;
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "TRON*!*@*");
-	strcpy(bm.mask, bm.orig_mask);
+	xstrlcpy(bm.mask, bm.orig_mask, sizeof(bm.mask));
 	irclower(bm.mask);
 
 	ret = db_add_banmask(db, &bm);
@@ -1431,7 +1431,7 @@ void test_may_join(void)
 
 	em.id_channel = chan.id_channel;
 	snprintf(em.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*ron!*@*");
-	strcpy(em.mask, em.orig_mask);
+	xstrlcpy(em.mask, em.orig_mask, sizeof(em.mask));
 	irclower(em.mask);
 
 	ret = db_add_exceptmask(db, &em);
@@ -1522,7 +1522,7 @@ void test_may_talk(void)
 
 	bm.id_channel = chan.id_channel;
 	snprintf(bm.orig_mask, MESSAGE_BUFFER_SIZE, "%s", "*!*6*@*");
-	strcpy(bm.mask, bm.orig_mask);
+	xstrlcpy(bm.mask, bm.orig_mask, sizeof(bm.mask));
 	irclower(bm.mask);
 
 	ret = db_add_banmask(db, &bm);

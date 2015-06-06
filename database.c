@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with saircd.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <sys/types.h>
+#include <unistd.h>
 #include <assert.h>
 #include <string.h>
 #include <time.h>
@@ -24,6 +26,7 @@
 
 #include "messages.h"
 #include "database.h"
+#include "util.h"
 
 /*
  * Auxiliar macros for small pieces of code that repeat all the time.
@@ -92,16 +95,16 @@ static void db_fill_client_from_row(sqlite3_stmt *stmt, struct db_client *out, i
 	out->id_client = sqlite3_column_int64(stmt, 0 + offset);
 	out->id_oper = sqlite3_column_int64(stmt, 1 + offset);
 	out->fd = sqlite3_column_int(stmt, 2 + offset);
-	strcpy(out->ip, (const char *)sqlite3_column_text(stmt, 3 + offset));
+	xstrlcpy(out->ip, (const char *)sqlite3_column_text(stmt, 3 + offset), sizeof(out->ip));
 	out->port = sqlite3_column_int(stmt, 4 + offset);
-	strcpy(out->orig_nickname, (const char *)sqlite3_column_text(stmt, 5 + offset));
-	strcpy(out->nickname, (const char *)sqlite3_column_text(stmt, 6 + offset));
-	strcpy(out->username, (const char *)sqlite3_column_text(stmt, 7 + offset));
-	strcpy(out->realname, (const char *)sqlite3_column_text(stmt, 8 + offset));
-	strcpy(out->orig_fullname, (const char *)sqlite3_column_text(stmt, 9 + offset));
-	strcpy(out->fullname, (const char *)sqlite3_column_text(stmt, 10 + offset));
+	xstrlcpy(out->orig_nickname, (const char *)sqlite3_column_text(stmt, 5 + offset), sizeof(out->orig_nickname));
+	xstrlcpy(out->nickname, (const char *)sqlite3_column_text(stmt, 6 + offset), sizeof(out->nickname));
+	xstrlcpy(out->username, (const char *)sqlite3_column_text(stmt, 7 + offset), sizeof(out->username));
+	xstrlcpy(out->realname, (const char *)sqlite3_column_text(stmt, 8 + offset), sizeof(out->realname));
+	xstrlcpy(out->orig_fullname, (const char *)sqlite3_column_text(stmt, 9 + offset), sizeof(out->orig_fullname));
+	xstrlcpy(out->fullname, (const char *)sqlite3_column_text(stmt, 10 + offset), sizeof(out->fullname));
 	out->away_flag = sqlite3_column_int(stmt, 11 + offset);
-	strcpy(out->away_text, (const char *)sqlite3_column_text(stmt, 12 + offset));
+	xstrlcpy(out->away_text, (const char *)sqlite3_column_text(stmt, 12 + offset), sizeof(out->away_text));
 	out->invisible_flag = sqlite3_column_int(stmt, 13 + offset);
 	out->wallops_flag = sqlite3_column_int(stmt, 14 + offset);
 	out->restricted_flag = sqlite3_column_int(stmt, 15 + offset);
@@ -120,11 +123,11 @@ static void db_fill_client_from_row(sqlite3_stmt *stmt, struct db_client *out, i
 static void db_fill_channel_from_row(sqlite3_stmt *stmt, struct db_channel *out, int offset)
 {
 	out->id_channel = sqlite3_column_int64(stmt, 0 + offset);
-	strcpy(out->orig_name, (const char *)sqlite3_column_text(stmt, 1 + offset));
-	strcpy(out->name, (const char *)sqlite3_column_text(stmt, 2 + offset));
-	strcpy(out->topic, (const char *)sqlite3_column_text(stmt, 3 + offset));
+	xstrlcpy(out->orig_name, (const char *)sqlite3_column_text(stmt, 1 + offset), sizeof(out->orig_name));
+	xstrlcpy(out->name, (const char *)sqlite3_column_text(stmt, 2 + offset), sizeof(out->name));
+	xstrlcpy(out->topic, (const char *)sqlite3_column_text(stmt, 3 + offset), sizeof(out->topic));
 	out->key_flag = sqlite3_column_int(stmt, 4 + offset);
-	strcpy(out->key, (const char *)sqlite3_column_text(stmt, 5 + offset));
+	xstrlcpy(out->key, (const char *)sqlite3_column_text(stmt, 5 + offset), sizeof(out->key));
 	out->limit_flag = sqlite3_column_int(stmt, 6 + offset);
 	out->limit_v = sqlite3_column_int(stmt, 7 + offset);
 	out->anonymous_flag = sqlite3_column_int(stmt, 8 + offset);
@@ -141,11 +144,11 @@ static void db_fill_channel_from_row(sqlite3_stmt *stmt, struct db_channel *out,
 static void db_fill_whowas_from_row(sqlite3_stmt *stmt, struct db_whowas *out, int offset)
 {
 	out->id_whowas = sqlite3_column_int64(stmt, 0 + offset);
-	strcpy(out->orig_nickname, (const char *)sqlite3_column_text(stmt, 1 + offset));
-	strcpy(out->nickname, (const char *)sqlite3_column_text(stmt, 2 + offset));
-	strcpy(out->username, (const char *)sqlite3_column_text(stmt, 3 + offset));
-	strcpy(out->ip, (const char *)sqlite3_column_text(stmt, 4 + offset));
-	strcpy(out->realname, (const char *)sqlite3_column_text(stmt, 5 + offset));
+	xstrlcpy(out->orig_nickname, (const char *)sqlite3_column_text(stmt, 1 + offset), sizeof(out->orig_nickname));
+	xstrlcpy(out->nickname, (const char *)sqlite3_column_text(stmt, 2 + offset), sizeof(out->nickname));
+	xstrlcpy(out->username, (const char *)sqlite3_column_text(stmt, 3 + offset), sizeof(out->username));
+	xstrlcpy(out->ip, (const char *)sqlite3_column_text(stmt, 4 + offset), sizeof(out->ip));
+	xstrlcpy(out->realname, (const char *)sqlite3_column_text(stmt, 5 + offset), sizeof(out->realname));
 	out->quit_time = (time_t)sqlite3_column_int64(stmt, 6 + offset);
 }
 
@@ -656,7 +659,7 @@ int db_get_forbidden_nick(sqlite3 *db, sqlite3_int64 id, struct db_forbidden_nic
 		return 1;
 
 	out->id_nick = id;
-	strcpy(out->nickname, (const char *)sqlite3_column_text(stmt, 1));
+	xstrlcpy(out->nickname, (const char *)sqlite3_column_text(stmt, 1), sizeof(out->nickname));
 	out->expiry = (time_t)sqlite3_column_int64(stmt, 2);
 
 	return 0;
@@ -680,8 +683,8 @@ int db_get_operator(sqlite3 *db, sqlite3_int64 id, struct db_operator *out)
 		return 1;
 
 	out->id_oper = id;
-	strcpy(out->username, (const char *)sqlite3_column_text(stmt, 1));
-	strcpy(out->password, (const char *)sqlite3_column_text(stmt, 2));
+	xstrlcpy(out->username, (const char *)sqlite3_column_text(stmt, 1), sizeof(out->username));
+	xstrlcpy(out->password, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->password));
 
 	return 0;
 }
@@ -776,8 +779,8 @@ int db_get_banmask(sqlite3 *db, sqlite3_int64 id, struct db_banmask *out)
 
 	out->id_banmask = id;
 	out->id_channel = sqlite3_column_int64(stmt, 1);
-	strcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-	strcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3));
+	xstrlcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->orig_mask));
+	xstrlcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(out->mask));
 
 	return 0;
 }
@@ -803,8 +806,8 @@ int db_get_banmask_by_mask(sqlite3 *db, sqlite3_int64 chan, const char *mask, st
 
 	out->id_banmask = sqlite3_column_int64(stmt, 0);
 	out->id_channel = sqlite3_column_int64(stmt, 1);
-	strcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-	strcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3));
+	xstrlcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->orig_mask));
+	xstrlcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(out->mask));
 
 	return 0;
 }
@@ -828,8 +831,8 @@ int db_get_exceptmask(sqlite3 *db, sqlite3_int64 id, struct db_exceptmask *out)
 
 	out->id_exceptmask = id;
 	out->id_channel = sqlite3_column_int64(stmt, 1);
-	strcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-	strcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3));
+	xstrlcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->orig_mask));
+	xstrlcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(out->mask));
 
 	return 0;
 }
@@ -855,8 +858,8 @@ int db_get_exceptmask_by_mask(sqlite3 *db, sqlite3_int64 chan, const char *mask,
 
 	out->id_exceptmask = sqlite3_column_int64(stmt, 0);
 	out->id_channel = sqlite3_column_int64(stmt, 1);
-	strcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-	strcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3));
+	xstrlcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->orig_mask));
+	xstrlcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(out->mask));
 
 	return 0;
 }
@@ -880,8 +883,8 @@ int db_get_invitemask(sqlite3 *db, sqlite3_int64 id, struct db_invitemask *out)
 
 	out->id_invitemask = id;
 	out->id_channel = sqlite3_column_int64(stmt, 1);
-	strcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-	strcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3));
+	xstrlcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->orig_mask));
+	xstrlcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(out->mask));
 
 	return 0;
 }
@@ -907,8 +910,8 @@ int db_get_invitemask_by_mask(sqlite3 *db, sqlite3_int64 chan, const char *mask,
 
 	out->id_invitemask = sqlite3_column_int64(stmt, 0);
 	out->id_channel = sqlite3_column_int64(stmt, 1);
-	strcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-	strcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3));
+	xstrlcpy(out->orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(out->orig_mask));
+	xstrlcpy(out->mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(out->mask));
 
 	return 0;
 }
@@ -2184,8 +2187,8 @@ int db_run_on_banmasks(sqlite3 *db, sqlite3_int64 chan, db_callback callback, vo
 		/* Get client data and run callback on it. */
 		mask.id_banmask = sqlite3_column_int64(stmt, 0);
 		mask.id_channel = sqlite3_column_int64(stmt, 1);
-		strcpy(mask.orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-		strcpy(mask.mask, (const char *)sqlite3_column_text(stmt, 3));
+		xstrlcpy(mask.orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(mask.orig_mask));
+		xstrlcpy(mask.mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(mask.mask));
 
 		callback((void *)(&mask), extra);
 	}
@@ -2219,8 +2222,8 @@ int db_run_on_exceptmasks(sqlite3 *db, sqlite3_int64 chan, db_callback callback,
 		/* Get client data and run callback on it. */
 		mask.id_exceptmask = sqlite3_column_int64(stmt, 0);
 		mask.id_channel = sqlite3_column_int64(stmt, 1);
-		strcpy(mask.orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-		strcpy(mask.mask, (const char *)sqlite3_column_text(stmt, 3));
+		xstrlcpy(mask.orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(mask.orig_mask));
+		xstrlcpy(mask.mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(mask.mask));
 
 		callback((void *)(&mask), extra);
 	}
@@ -2254,8 +2257,8 @@ int db_run_on_invitemasks(sqlite3 *db, sqlite3_int64 chan, db_callback callback,
 		/* Get client data and run callback on it. */
 		mask.id_invitemask = sqlite3_column_int64(stmt, 0);
 		mask.id_channel = sqlite3_column_int64(stmt, 1);
-		strcpy(mask.orig_mask, (const char *)sqlite3_column_text(stmt, 2));
-		strcpy(mask.mask, (const char *)sqlite3_column_text(stmt, 3));
+		xstrlcpy(mask.orig_mask, (const char *)sqlite3_column_text(stmt, 2), sizeof(mask.orig_mask));
+		xstrlcpy(mask.mask, (const char *)sqlite3_column_text(stmt, 3), sizeof(mask.mask));
 
 		callback((void *)(&mask), extra);
 	}

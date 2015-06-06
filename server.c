@@ -689,7 +689,7 @@ static void srv_rebuild_cli_fullname(struct server *srv, struct db_client *cli)
 {
 	char *aux = srv_malloc_msg();
 
-	strcpy(aux, cli->username);
+	xstrlcpy(aux, cli->username, MESSAGE_BUFFER_SIZE);
 	irclower(aux);
 
 	snprintf(cli->orig_fullname, MESSAGE_BUFFER_SIZE, "%s!%s@%s", cli->orig_nickname, cli->username, cli->ip);
@@ -743,7 +743,7 @@ static void srv_process_nick(struct server *srv, struct db_client *cli, struct c
 		return;
 	}
 
-	strcpy(lnick, c->args.cmd_nick.nickname);
+	xstrlcpy(lnick, c->args.cmd_nick.nickname, sizeof(lnick));
 	irclower(lnick);
 
 	if (db_get_client_by_nick(srv->db, lnick, &other) == 0 &&
@@ -757,8 +757,8 @@ static void srv_process_nick(struct server *srv, struct db_client *cli, struct c
 		return;
 	}
 
-	strcpy(cli->nickname, lnick);
-	strcpy(cli->orig_nickname, c->args.cmd_nick.nickname);
+	xstrlcpy(cli->nickname, lnick, sizeof(cli->nickname));
+	xstrlcpy(cli->orig_nickname, c->args.cmd_nick.nickname, sizeof(cli->orig_nickname));
 
 	if (! (cli->regstate & REGSTATE_NICK)) {
 		/* Registration process. */
@@ -768,7 +768,7 @@ static void srv_process_nick(struct server *srv, struct db_client *cli, struct c
 	} else if (cli->regstate & REGSTATE_USER) {
 		/* Nickname change. */
 		ofn = srv_malloc_msg();
-		strcpy(ofn, cli->orig_fullname);
+		xstrlcpy(ofn, cli->orig_fullname, MESSAGE_BUFFER_SIZE);
 		srv_rebuild_cli_fullname(srv, cli);
 		srv_nickname_change(srv, cli, ofn);
 		srv_free(&ofn);
@@ -783,8 +783,8 @@ static void srv_process_user(struct server *srv, struct db_client *cli, struct c
 	}
 	cli->regstate |= REGSTATE_USER;
 
-	strcpy(cli->username, c->args.cmd_user.user);
-	strcpy(cli->realname, c->args.cmd_user.realname);
+	xstrlcpy(cli->username, c->args.cmd_user.user, sizeof(cli->username));
+	xstrlcpy(cli->realname, c->args.cmd_user.realname, sizeof(cli->realname));
 
 	if (c->args.cmd_user.mode & 4)
 		cli->wallops_flag = 1;
@@ -889,7 +889,7 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 		lnick = srv_malloc_msg();
 		nick = c->args.cmd_privmsg.target.nickname;
 
-		strcpy(lnick, nick);
+		xstrlcpy(lnick, nick, MESSAGE_BUFFER_SIZE);
 		irclower(lnick);
 
 		if (db_get_client_by_nick(srv->db, lnick, &tcli) != 0) {
@@ -911,7 +911,7 @@ static void srv_process_privmsg(struct server *srv, struct db_client *cli, struc
 		lchan = srv_malloc_msg();
 		chan = c->args.cmd_privmsg.target.channel;
 
-		strcpy(lchan, chan);
+		xstrlcpy(lchan, chan, MESSAGE_BUFFER_SIZE);
 		irclower(lchan);
 
 		if (db_get_channel_by_name(srv->db, lchan, &tchan) != 0) {
@@ -959,7 +959,7 @@ static void srv_process_notice(struct server *srv, struct db_client *cli, struct
 	case TYPE_NICK:
 		nick = c->args.cmd_notice.target.nickname;
 
-		strcpy(lc, nick);
+		xstrlcpy(lc, nick, sizeof(lc));
 		irclower(lc);
 
 		if (db_get_client_by_nick(srv->db, lc, &tcli) != 0)
@@ -1042,7 +1042,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 
 	switch (c->args.cmd_mode.mode_type) {
 	case TYPE_NICK:
-		strcpy(lnick, c->args.cmd_mode.mode_args.type_nick.nickname);
+		xstrlcpy(lnick, c->args.cmd_mode.mode_args.type_nick.nickname, sizeof(lnick));
 		irclower(lnick);
 
 		if (strcmp(lnick, cli->nickname) != 0) {
@@ -1106,7 +1106,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 		break;
 	case TYPE_CHAN:
 		chan_name = c->args.cmd_mode.mode_args.type_chan.channel;
-		strcpy(lchan, chan_name);
+		xstrlcpy(lchan, chan_name, sizeof(lchan));
 		irclower(lchan);
 
 		if (db_get_channel_by_name(srv->db, lchan, &chan) != 0) {
@@ -1306,7 +1306,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 						srv_send_error_keyset(srv, cli, chan_name);
 					} else if (ptc->others[i].action == ACTION_ADD && !chan.key_flag) {
 						chan.key_flag = 1;
-						strcpy(chan.key, ptc->others[i].param);
+						xstrlcpy(chan.key, ptc->others[i].param, sizeof(chan.key));
 
 						areply.others[areply.num_others].other_str = "+k";
 						areply.others[areply.num_others].arg_str = chan.key;
@@ -1339,7 +1339,7 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 					}
 				/* MODE_OPER and MODE_VOICE */
 				} else if (ptc->others[i].mode == MODE_OPER || ptc->others[i].mode == MODE_VOICE) {
-					strcpy(lnick, ptc->others[i].param);
+					xstrlcpy(lnick, ptc->others[i].param, sizeof(lnick));
 					irclower(lnick);
 
 					if (db_get_client_by_nick(srv->db, lnick, &target) == 0 &&
@@ -1385,8 +1385,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 					if (ptc->others[i].action == ACTION_ADD &&
 					    db_count_banmasks(srv->db, chan.id_channel) < srv->config.max_bans) {
 						bm.id_channel = chan.id_channel;
-						strcpy(bm.orig_mask, ptc->others[i].param);
-						strcpy(bm.mask, bm.orig_mask);
+						xstrlcpy(bm.orig_mask, ptc->others[i].param, sizeof(bm.orig_mask));
+						xstrlcpy(bm.mask, bm.orig_mask, sizeof(bm.mask));
 						irclower(bm.mask);
 
 						if (db_get_banmask_by_mask(srv->db, bm.id_channel, bm.mask, &bm) != 0) {
@@ -1417,8 +1417,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 					if (ptc->others[i].action == ACTION_ADD &&
 					    db_count_exceptmasks(srv->db, chan.id_channel) < srv->config.max_excepts) {
 						em.id_channel = chan.id_channel;
-						strcpy(em.orig_mask, ptc->others[i].param);
-						strcpy(em.mask, em.orig_mask);
+						xstrlcpy(em.orig_mask, ptc->others[i].param, sizeof(em.orig_mask));
+						xstrlcpy(em.mask, em.orig_mask, sizeof(em.mask));
 						irclower(em.mask);
 
 						if (db_get_exceptmask_by_mask(srv->db, em.id_channel, em.mask, &em) != 0) {
@@ -1449,8 +1449,8 @@ static void srv_process_mode(struct server *srv, struct db_client *cli, struct c
 					if (ptc->others[i].action == ACTION_ADD &&
 					    db_count_invitemasks(srv->db, chan.id_channel) < srv->config.max_invites) {
 						im.id_channel = chan.id_channel;
-						strcpy(im.orig_mask, ptc->others[i].param);
-						strcpy(im.mask, im.orig_mask);
+						xstrlcpy(im.orig_mask, ptc->others[i].param, sizeof(im.orig_mask));
+						xstrlcpy(im.mask, im.orig_mask, sizeof(im.mask));
 						irclower(im.mask);
 
 						if (db_get_invitemask_by_mask(srv->db, im.id_channel, im.mask, &im) != 0) {
@@ -1637,7 +1637,7 @@ static void srv_process_away(struct server *srv, struct db_client *cli, struct c
 		srv_send_reply_unaway(srv, cli);
 	} else {
 		cli->away_flag = 1;
-		strcpy(cli->away_text, c->args.cmd_away.text);
+		xstrlcpy(cli->away_text, c->args.cmd_away.text, sizeof(cli->away_text));
 		srv_send_reply_nowaway(srv, cli);
 	}
 }
@@ -1688,7 +1688,7 @@ static void srv_process_who(struct server *srv, struct db_client *cli, struct co
 		return;
 
 	if (c->args.cmd_who.target_type == TYPE_NICK) {
-		strcpy(ln, c->args.cmd_who.target.nickname);
+		xstrlcpy(ln, c->args.cmd_who.target.nickname, sizeof(ln));
 		irclower(ln);
 
 		if (db_get_client_by_nick(srv->db, ln, &tcli) == 0) {
@@ -1700,7 +1700,7 @@ static void srv_process_who(struct server *srv, struct db_client *cli, struct co
 		}
 
 	} else if (c->args.cmd_who.target_type == TYPE_CHAN) {
-		strcpy(lc, c->args.cmd_who.target.channel);
+		xstrlcpy(lc, c->args.cmd_who.target.channel, sizeof(lc));
 		irclower(lc);
 
 		if (db_get_channel_by_name(srv->db, lc, &tchan) == 0 && !(tchan.quiet_flag || tchan.secret_flag)) {
@@ -1843,7 +1843,7 @@ static void srv_process_userhost(struct server *srv, struct db_client *cli, stru
 		      srv->config.server_name, RPL_USERHOST, srv_dest_nick(cli));
 
 	for (used = 0, i = 0; i < c->args.cmd_userhost.num_nicknames; ++i) {
-		strcpy(l, c->args.cmd_userhost.nicknames[i]);
+		xstrlcpy(l, c->args.cmd_userhost.nicknames[i], sizeof(l));
 		irclower(l);
 
 		if (db_get_client_by_nick(srv->db, l, &other) != 0)
@@ -1882,7 +1882,7 @@ static void srv_process_ison(struct server *srv, struct db_client *cli, struct c
 		      srv->config.server_name, RPL_ISON, srv_dest_nick(cli));
 
 	for (used = 0, i = 0; i < c->args.cmd_ison.num_nicknames; ++i) {
-		strcpy(l, c->args.cmd_ison.nicknames[i]);
+		xstrlcpy(l, c->args.cmd_ison.nicknames[i], sizeof(l));
 		irclower(l);
 
 		if (db_get_client_by_nick(srv->db, l, &other) != 0)
@@ -1966,7 +1966,7 @@ static void srv_process_whowas(struct server *srv, struct db_client *cli, struct
 
 	for (i = 0; i < c->args.cmd_whowas.num_nicknames; ++i) {
 		nick = c->args.cmd_whowas.nicknames[i];
-		strcpy(lnick, nick);
+		xstrlcpy(lnick, nick, MESSAGE_BUFFER_SIZE);
 		irclower(lnick);
 
 		args.srv = srv;
@@ -2050,7 +2050,7 @@ static void srv_process_whois(struct server *srv, struct db_client *cli, struct 
 
 	for (i = 0; i < c->args.cmd_whois.num_nicknames; ++i) {
 		nick = c->args.cmd_whois.nicknames[i];
-		strcpy(lnick, nick);
+		xstrlcpy(lnick, nick, MESSAGE_BUFFER_SIZE);
 		irclower(lnick);
 
 		if (db_get_client_by_nick(srv->db, lnick, &wn) != 0) {
@@ -2106,7 +2106,7 @@ static void srv_process_kill(struct server *srv, struct db_client *cli, struct c
 		goto out;
 	}
 
-	strcpy(lnick, c->args.cmd_kill.nickname);
+	xstrlcpy(lnick, c->args.cmd_kill.nickname, MESSAGE_BUFFER_SIZE);
 	irclower(lnick);
 
 	if (db_get_client_by_nick(srv->db, lnick, &killed) != 0) {
@@ -2237,7 +2237,7 @@ static void srv_one_names_cb(void *cli_, void *args_)
 		minilen = strlen(minibuffer);
 		assert(args->bufused + minilen < args->bufsize - 3);
 
-		strcpy(args->buffer + args->bufused, minibuffer);
+		xstrlcpy(args->buffer + args->bufused, minibuffer, args->bufsize - args->bufused);
 		args->bufused += minilen;
 		args->accum += 1;
 	}
@@ -2245,7 +2245,7 @@ static void srv_one_names_cb(void *cli_, void *args_)
 	if (args->accum < MAX_NAMREPLY_NICKS)
 		return;
 
-	strcpy(args->buffer + args->bufused, "\r\n");
+	xstrlcpy(args->buffer + args->bufused, "\r\n", args->bufsize - args->bufused);
 	args->bufused += 2;
 
 	srv_enqueue_client_data(args->srv, args->cli, args->buffer, args->bufused);
@@ -2299,7 +2299,7 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 	struct db_membership memb;
 	int ret;
 
-	strcpy(lchan, cname);
+	xstrlcpy(lchan, cname, MESSAGE_BUFFER_SIZE);
 	irclower(lchan);
 
 	if (db_count_client_channels(srv->db, cli->id_client) >= srv->config.max_client_channels) {
@@ -2316,8 +2316,8 @@ static void srv_process_one_join(struct server *srv, struct db_client *cli, cons
 		}
 
 		memset(&chan, 0, sizeof(chan));
-		strcpy(chan.orig_name, cname);
-		strcpy(chan.name, lchan);
+		xstrlcpy(chan.orig_name, cname, sizeof(chan.orig_name));
+		xstrlcpy(chan.name, lchan, sizeof(chan.name));
 
 		ret = db_add_channel(srv->db, &chan);
 		assert(ret == 0);
@@ -2447,7 +2447,7 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 	struct db_channel chan;
 	struct db_membership m;
 
-	strcpy(lchan, c->args.cmd_topic.channel);
+	xstrlcpy(lchan, c->args.cmd_topic.channel, MESSAGE_BUFFER_SIZE);
 	irclower(lchan);
 
 	if (db_get_channel_by_name(srv->db, lchan, &chan) != 0 || chan.secret_flag) {
@@ -2464,7 +2464,7 @@ static void srv_process_topic(struct server *srv, struct db_client *cli, struct 
 			goto out;
 		}
 
-		strcpy(chan.topic, c->args.cmd_topic.topic);
+		xstrlcpy(chan.topic, c->args.cmd_topic.topic, sizeof(chan.topic));
 		ret = db_modify_channel(srv->db, &chan);
 		assert(ret == 0);
 
@@ -2511,7 +2511,7 @@ static void srv_process_names(struct server *srv, struct db_client *cli, struct 
 
 	lchan = srv_malloc_msg();
 	for (i = 0; i < c->args.cmd_names_list.num_channels; ++i) {
-		strcpy(lchan, c->args.cmd_names_list.channels[i]);
+		xstrlcpy(lchan, c->args.cmd_names_list.channels[i], MESSAGE_BUFFER_SIZE);
 		irclower(lchan);
 
 		if (db_get_channel_by_name(srv->db, lchan, &chan) == 0 && !chan.secret_flag) {
@@ -2545,7 +2545,7 @@ static void srv_process_list(struct server *srv, struct db_client *cli, struct c
 	}
 
 	for (i = 0; i < c->args.cmd_names_list.num_channels; ++i) {
-		strcpy(lchan, c->args.cmd_names_list.channels[i]);
+		xstrlcpy(lchan, c->args.cmd_names_list.channels[i], sizeof(lchan));
 		irclower(lchan);
 
 		if (db_get_channel_by_name(srv->db, lchan, &chan) != 0 || chan.secret_flag)
@@ -2574,7 +2574,7 @@ static void srv_process_one_part(struct server *srv, struct db_client *cli, cons
 	int ret;
 	struct srv_enqueue_cb_args args;
 
-	strcpy(lchan, cname);
+	xstrlcpy(lchan, cname, sizeof(lchan));
 	irclower(lchan);
 
 	if (db_get_channel_by_name(srv->db, lchan, &chan) != 0) {
@@ -2638,7 +2638,7 @@ static void srv_process_one_kick(struct server *srv, struct db_client *cli, cons
 	char lchan[CHANNEL_BUFFER_SIZE];
 	char lnick[NICKNAME_BUFFER_SIZE];
 
-	strcpy(lchan, c);
+	xstrlcpy(lchan, c, sizeof(lchan));
 	irclower(lchan);
 
 	if (db_get_channel_by_name(srv->db, lchan, &chan) != 0) {
@@ -2656,7 +2656,7 @@ static void srv_process_one_kick(struct server *srv, struct db_client *cli, cons
 		return;
 	}
 
-	strcpy(lnick, n);
+	xstrlcpy(lnick, n, sizeof(lnick));
 	irclower(lnick);
 
 	if (db_get_client_by_nick(srv->db, lnick, &kicked) != 0
@@ -2714,7 +2714,7 @@ static void srv_process_invite(struct server *srv, struct db_client *cli, struct
 	
 	int ret;
 
-	strcpy(lnick, c->args.cmd_invite.nickname);
+	xstrlcpy(lnick, c->args.cmd_invite.nickname, sizeof(lnick));
 	irclower(lnick);
 
 	if (db_get_client_by_nick(srv->db, lnick, &guest) != 0) {
@@ -2722,7 +2722,7 @@ static void srv_process_invite(struct server *srv, struct db_client *cli, struct
 		return;
 	}
 
-	strcpy(lchan, c->args.cmd_invite.channel);
+	xstrlcpy(lchan, c->args.cmd_invite.channel, sizeof(lchan));
 	irclower(lchan);
 
 	if (db_get_channel_by_name(srv->db, lchan, &chan) == 0) {
@@ -3413,7 +3413,7 @@ static void srv_make_new_client(struct db_client *cli, int slot, int fd, const c
 	memset(cli, 0, sizeof(struct db_client));
 	cli->array_index = slot;
 	cli->fd = fd;
-	strcpy(cli->ip, ip);
+	xstrlcpy(cli->ip, ip, sizeof(cli->ip));
 	cli->port = port;
 	cli->last_activity = time(NULL);
 	cli->last_talk = cli->last_activity;
@@ -3734,31 +3734,31 @@ static int srv_cfg_parse_key_value(const char *key, const char *value, struct se
 		    fprintf(stderr, "ERROR: invalid value for server_name\n");
 		    return -1;
 		}
-		strcpy(cfg->server_name, value);
+		xstrlcpy(cfg->server_name, value, sizeof(cfg->server_name));
 	} else if (strcmp(key, "motd") == 0) {
 		if (! srv_cfg_verify_phrase(value)) {
 			fprintf(stderr, "ERROR: invalid value for motd\n");
 			return -1;
 		}
-		strcpy(cfg->motd, value);
+		xstrlcpy(cfg->motd, value, sizeof(cfg->motd));
 	} else if (strcmp(key, "location") == 0) {
 		if (! srv_cfg_verify_phrase(value)) {
 			fprintf(stderr, "ERROR: invalid value for location\n");
 			return -1;
 		}
-		strcpy(cfg->location, value);
+		xstrlcpy(cfg->location, value, sizeof(cfg->location));
 	} else if (strcmp(key, "entity") == 0) {
 		if (! srv_cfg_verify_phrase(value)) {
 			fprintf(stderr, "ERROR: invalid value for entity\n");
 			return -1;
 		}
-		strcpy(cfg->entity, value);
+		xstrlcpy(cfg->entity, value, sizeof(cfg->entity));
 	} else if (strcmp(key, "email") == 0) {
 		if (! srv_cfg_verify_phrase(value)) {
 			fprintf(stderr, "ERROR: invalid value for email\n");
 			return -1;
 		}
-		strcpy(cfg->email, value);
+		xstrlcpy(cfg->email, value, sizeof(cfg->email));
 	} else if (strcmp(key, "max_clients") == 0) {
 		cfg->max_clients = srv_cfg_parse_int(value);
 		if (cfg->max_clients < MIN_CLIENTS) {
@@ -3792,7 +3792,7 @@ static int srv_cfg_parse_key_value(const char *key, const char *value, struct se
 			fprintf(stderr, "ERROR: invalid value for address\n");
 			return -1;
 		}
-		strcpy(cfg->address, value);
+		xstrlcpy(cfg->address, value, sizeof(cfg->address));
 	} else if (strcmp(key, "timeout_seconds") == 0) {
 		cfg->timeout_seconds = srv_cfg_parse_int(value);
 		if (cfg->timeout_seconds < MIN_TIMEOUT || cfg->timeout_seconds > MAX_TIMEOUT) {
@@ -3818,15 +3818,15 @@ static int srv_cfg_parse_key_value(const char *key, const char *value, struct se
 			fprintf(stderr, "ERROR: operators file: %s\n", errmsg);
 			return -1;
 		}
-		strcpy(cfg->operators_filename, value);
+		xstrlcpy(cfg->operators_filename, value, sizeof(cfg->operators_filename));
 	} else if (strcmp(key, "username") == 0) {
-		strcpy(cfg->username, value);
+		xstrlcpy(cfg->username, value, sizeof(cfg->username));
 	} else if (strcmp(key, "chroot_dir") == 0) {
 		if (strlen(value) > 0 && value[0] != '/') {
 			fprintf(stderr, "ERROR: chroot_dir must be an absolute path\n");
 			return -1;
 		}
-		strcpy(cfg->chroot_dir, value);
+		xstrlcpy(cfg->chroot_dir, value, sizeof(cfg->chroot_dir));
 	} else if (strcmp(key, "daemonize") == 0) {
 		cfg->daemonize = srv_cfg_parse_int(value);
 		if (cfg->daemonize != 0 && cfg->daemonize != 1) {
@@ -3870,11 +3870,11 @@ void srv_parse_config(FILE *f, struct server_config *cfg)
 	char *value = srv_malloc_msg();
 
 	/* Set some sane default values. */
-	strcpy(cfg->server_name, DEFAULT_SERVER_NAME);
-	strcpy(cfg->motd, DEFAULT_MOTD);
-	strcpy(cfg->location, DEFAULT_LOCATION);
-	strcpy(cfg->entity, DEFAULT_ENTITY);
-	strcpy(cfg->email, DEFAULT_EMAIL);
+	xstrlcpy(cfg->server_name, DEFAULT_SERVER_NAME, sizeof(cfg->server_name));
+	xstrlcpy(cfg->motd, DEFAULT_MOTD, sizeof(cfg->motd));
+	xstrlcpy(cfg->location, DEFAULT_LOCATION, sizeof(cfg->location));
+	xstrlcpy(cfg->entity, DEFAULT_ENTITY, sizeof(cfg->entity));
+	xstrlcpy(cfg->email, DEFAULT_EMAIL, sizeof(cfg->email));
 	cfg->max_clients = DEFAULT_MAX_CLIENTS;
 	cfg->max_channels = DEFAULT_MAX_CHANNELS;
 	cfg->max_client_channels = DEFAULT_MAX_CLIENT_CHANNELS;
@@ -3883,13 +3883,13 @@ void srv_parse_config(FILE *f, struct server_config *cfg)
 	cfg->max_excepts = DEFAULT_MAX_EXCEPTS;
 	cfg->max_invites = DEFAULT_MAX_INVITES;
 	cfg->port = DEFAULT_PORT;
-	strcpy(cfg->address, DEFAULT_ADDRESS);
+	xstrlcpy(cfg->address, DEFAULT_ADDRESS, sizeof(cfg->address));
 	cfg->timeout_seconds = DEFAULT_TIMEOUT_SECONDS;
 	cfg->whowas_timeout_seconds = DEFAULT_WHOWAS_TIMEOUT_SECONDS;
 	cfg->kill_timeout_seconds = DEFAULT_KILL_TIMEOUT_SECONDS;
-	strcpy(cfg->operators_filename, DEFAULT_OPERATORS_FILENAME);
-	strcpy(cfg->username, DEFAULT_USERNAME);
-	strcpy(cfg->chroot_dir, DEFAULT_CHROOT_DIR);
+	xstrlcpy(cfg->operators_filename, DEFAULT_OPERATORS_FILENAME, sizeof(cfg->operators_filename));
+	xstrlcpy(cfg->username, DEFAULT_USERNAME, sizeof(cfg->username));
+	xstrlcpy(cfg->chroot_dir, DEFAULT_CHROOT_DIR, sizeof(cfg->chroot_dir));
 	cfg->daemonize = DEFAULT_DAEMONIZE;
 
 	lineno = 0;

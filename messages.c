@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with saircd.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <sys/types.h>
+#include <unistd.h>
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
@@ -25,11 +27,12 @@
 #include <pcre.h>
 
 #include "messages.h"
+#include "util.h"
 
 /* Static functions. */
 static int tokenize_callout(pcre_callout_block *b);
 
-static int copy_trailing_token_to(const struct tokens *t, int tok, char *dst);
+static int copy_trailing_token_to(const struct tokens *t, int tok, char *dst, size_t size);
 
 static int valid_nickname(const char *nick);
 
@@ -185,11 +188,11 @@ void init_command(struct command *c)
 	memset(c, 0, sizeof(struct command));
 }
 
-static int copy_trailing_token_to(const struct tokens *t, int tok, char *dst)
+static int copy_trailing_token_to(const struct tokens *t, int tok, char *dst, size_t size)
 {
 	if (tok >= t->counter)
 		return 0;
-	strcpy(dst, t->token[tok]);
+	xstrlcpy(dst, t->token[tok], size);
 	return 1;
 }
 
@@ -318,7 +321,7 @@ static int parse_cmd_nick(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok <= 0)
 		return ERR_NONICKNAMEGIVEN;
 
-	strcpy(c->args.cmd_nick.nickname, t->token[tok]);
+	xstrlcpy(c->args.cmd_nick.nickname, t->token[tok], sizeof(c->args.cmd_nick.nickname));
 
 	if (! valid_nickname(t->token[tok]))
 		return ERR_ERRONEUSNICKNAME;
@@ -337,7 +340,7 @@ static int parse_cmd_user(const struct tokens *t, int tok, struct command *c)
 	/* user */
 	if (! valid_user_name(t->token[tok]))
 		return PARSE_ERROR;
-	strcpy(c->args.cmd_user.user, t->token[tok]);
+	xstrlcpy(c->args.cmd_user.user, t->token[tok], sizeof(c->args.cmd_user.user));
 
 	/* mode */
 	value = strtol(t->token[tok+1], &endptr, 10);
@@ -349,7 +352,7 @@ static int parse_cmd_user(const struct tokens *t, int tok, struct command *c)
 	/* Third argument is ignored. */
 
 	/* realname */
-	strcpy(c->args.cmd_user.realname, t->token[tok+3]);
+	xstrlcpy(c->args.cmd_user.realname, t->token[tok+3], sizeof(c->args.cmd_user.realname));
 
 	return 0;
 }
@@ -359,8 +362,8 @@ static int parse_cmd_oper(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok < 2) /* 2 arguments are needed. */
 		return ERR_NEEDMOREPARAMS;
 
-	strcpy(c->args.cmd_oper.name, t->token[tok]);
-	strcpy(c->args.cmd_oper.password, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_oper.name, t->token[tok], sizeof(c->args.cmd_oper.name));
+	xstrlcpy(c->args.cmd_oper.password, t->token[tok+1], sizeof(c->args.cmd_oper.password));
 
 	return 0;
 }
@@ -374,10 +377,10 @@ static int parse_cmd_service(const struct tokens *t, int tok, struct command *c)
 		return ERR_ERRONEUSNICKNAME;
 
 	/* Arguments 1 and 4 are reserved and unused. */
-	strcpy(c->args.cmd_service.nickname, t->token[tok]);
-	strcpy(c->args.cmd_service.distribution, t->token[tok+2]);
-	strcpy(c->args.cmd_service.type, t->token[tok+3]);
-	strcpy(c->args.cmd_service.info, t->token[tok+5]);
+	xstrlcpy(c->args.cmd_service.nickname, t->token[tok], sizeof(c->args.cmd_service.nickname));
+	xstrlcpy(c->args.cmd_service.distribution, t->token[tok+2], sizeof(c->args.cmd_service.distribution));
+	xstrlcpy(c->args.cmd_service.type, t->token[tok+3], sizeof(c->args.cmd_service.type));
+	xstrlcpy(c->args.cmd_service.info, t->token[tok+5], sizeof(c->args.cmd_service.info));
 
 	return 0;
 }
@@ -387,8 +390,8 @@ static int parse_cmd_squit(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok < 2) /* 2 arguments are needed. */
 		return ERR_NEEDMOREPARAMS;
 
-	strcpy(c->args.cmd_squit.server, t->token[tok]);
-	strcpy(c->args.cmd_squit.comment, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_squit.server, t->token[tok], sizeof(c->args.cmd_squit.server));
+	xstrlcpy(c->args.cmd_squit.comment, t->token[tok+1], sizeof(c->args.cmd_squit.comment));
 
 	return 0;
 }
@@ -398,10 +401,10 @@ static int parse_cmd_topic(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok < 1) /* At least one argument. */
 		return ERR_NEEDMOREPARAMS;
 
-	strcpy(c->args.cmd_topic.channel, t->token[tok]);
+	xstrlcpy(c->args.cmd_topic.channel, t->token[tok], sizeof(c->args.cmd_topic.channel));
 
 	if (t->counter - tok >= 2) { /* Topic message was given. */
-		strcpy(c->args.cmd_topic.topic, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_topic.topic, t->token[tok+1], sizeof(c->args.cmd_topic.topic));
 		c->args.cmd_topic.topic_given = 1;
 	} else {
 		c->args.cmd_topic.topic[0] = '\0';
@@ -422,8 +425,8 @@ static int parse_cmd_invite(const struct tokens *t, int tok, struct command *c)
 	if (! valid_channel_name(t->token[tok+1]))
 		return PARSE_ERROR;
 
-	strcpy(c->args.cmd_invite.nickname, t->token[tok]);
-	strcpy(c->args.cmd_invite.channel, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_invite.nickname, t->token[tok], sizeof(c->args.cmd_invite.nickname));
+	xstrlcpy(c->args.cmd_invite.channel, t->token[tok+1], sizeof(c->args.cmd_invite.channel));
 
 	return 0;
 }
@@ -438,16 +441,16 @@ static int parse_cmd_privmsg(const struct tokens *t, int tok, struct command *c)
 	/* Message target. */
 	if (valid_nickname(t->token[tok])) {
 		c->args.cmd_privmsg.target_type = TYPE_NICK;
-		strcpy(c->args.cmd_privmsg.target.nickname, t->token[tok]);
+		xstrlcpy(c->args.cmd_privmsg.target.nickname, t->token[tok], sizeof(c->args.cmd_privmsg.target.nickname));
 	} else if (valid_channel_name(t->token[tok])) {
 		c->args.cmd_privmsg.target_type = TYPE_CHAN;
-		strcpy(c->args.cmd_privmsg.target.channel, t->token[tok]);
+		xstrlcpy(c->args.cmd_privmsg.target.channel, t->token[tok], sizeof(c->args.cmd_privmsg.target.channel));
 	} else {
 		return PARSE_ERROR;
 	}
 
 	/* Message text. */
-	strcpy(c->args.cmd_privmsg.text, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_privmsg.text, t->token[tok+1], sizeof(c->args.cmd_privmsg.text));
 
 	return 0;
 }
@@ -460,16 +463,16 @@ static int parse_cmd_notice(const struct tokens *t, int tok, struct command *c)
 	/* Notice target. */
 	if (valid_nickname(t->token[tok])) {
 		c->args.cmd_notice.target_type = TYPE_NICK;
-		strcpy(c->args.cmd_notice.target.nickname, t->token[tok]);
+		xstrlcpy(c->args.cmd_notice.target.nickname, t->token[tok], sizeof(c->args.cmd_notice.target.nickname));
 	} else if (valid_channel_name(t->token[tok])) {
 		c->args.cmd_notice.target_type = TYPE_CHAN;
-		strcpy(c->args.cmd_notice.target.channel, t->token[tok]);
+		xstrlcpy(c->args.cmd_notice.target.channel, t->token[tok], sizeof(c->args.cmd_notice.target.channel));
 	} else {
 		return PARSE_ERROR;
 	}
 
 	/* Notice text. */
-	strcpy(c->args.cmd_notice.text, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_notice.text, t->token[tok+1], sizeof(c->args.cmd_notice.text));
 
 	return 0;
 }
@@ -493,7 +496,7 @@ static int parse_cmd_stats(const struct tokens *t, int tok, struct command *c)
 		return 0;
 
 	/* Target argument. */
-	strcpy(c->args.cmd_stats.target, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_stats.target, t->token[tok+1], sizeof(c->args.cmd_stats.target));
 
 	return 0;
 }
@@ -505,10 +508,10 @@ static int parse_cmd_links(const struct tokens *t, int tok, struct command *c)
 		c->args.cmd_links.server_mask[0] = '\0';
 	} else if (t->counter - tok == 1) {
 		c->args.cmd_links.remote_server[0] = '\0';
-		strcpy(c->args.cmd_links.server_mask, t->token[tok]);
+		xstrlcpy(c->args.cmd_links.server_mask, t->token[tok], sizeof(c->args.cmd_links.server_mask));
 	} else {
-		strcpy(c->args.cmd_links.remote_server, t->token[tok]);
-		strcpy(c->args.cmd_links.server_mask, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_links.remote_server, t->token[tok], sizeof(c->args.cmd_links.remote_server));
+		xstrlcpy(c->args.cmd_links.server_mask, t->token[tok+1], sizeof(c->args.cmd_links.server_mask));
 	}
 
 	return 0;
@@ -531,12 +534,12 @@ static int parse_cmd_connect(const struct tokens *t, int tok, struct command *c)
 		return PARSE_ERROR;
 
 	/* Target server and port. */
-	strcpy(c->args.cmd_connect.target_server, t->token[tok]);
+	xstrlcpy(c->args.cmd_connect.target_server, t->token[tok], sizeof(c->args.cmd_connect.target_server));
 	c->args.cmd_connect.port = (int)port;
 
 	/* Remote server if present. */
 	if (t->counter - tok >= 3)
-		strcpy(c->args.cmd_connect.remote_server, t->token[tok+2]);
+		xstrlcpy(c->args.cmd_connect.remote_server, t->token[tok+2], sizeof(c->args.cmd_connect.remote_server));
 	else
 		c->args.cmd_connect.remote_server[0] = '\0';
 	return 0;
@@ -553,8 +556,8 @@ static int parse_cmd_squery(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok < 2)
 		return ERR_NOTEXTTOSEND;
 
-	strcpy(c->args.cmd_squery.servicename, t->token[tok]);
-	strcpy(c->args.cmd_squery.text, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_squery.servicename, t->token[tok], sizeof(c->args.cmd_squery.servicename));
+	xstrlcpy(c->args.cmd_squery.text, t->token[tok+1], sizeof(c->args.cmd_squery.text));
 
 	return 0;
 }
@@ -564,8 +567,8 @@ static int parse_cmd_kill(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok < 2)
 		return ERR_NEEDMOREPARAMS;
 
-	strcpy(c->args.cmd_kill.nickname, t->token[tok]);
-	strcpy(c->args.cmd_kill.comment, t->token[tok+1]);
+	xstrlcpy(c->args.cmd_kill.nickname, t->token[tok], sizeof(c->args.cmd_kill.nickname));
+	xstrlcpy(c->args.cmd_kill.comment, t->token[tok+1], sizeof(c->args.cmd_kill.comment));
 
 	return 0;
 }
@@ -576,11 +579,11 @@ static int parse_cmd_ping_pong(const struct tokens *t, int tok, struct command *
 		return ERR_NOORIGIN;
 
 	/* server1 */
-	strcpy(c->args.cmd_ping_pong.server1, t->token[tok]);
+	xstrlcpy(c->args.cmd_ping_pong.server1, t->token[tok], sizeof(c->args.cmd_ping_pong.server1));
 
 	/* server2 if present. */
 	if (t->counter - tok >= 2)
-		strcpy(c->args.cmd_ping_pong.server2, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_ping_pong.server2, t->token[tok+1], sizeof(c->args.cmd_ping_pong.server2));
 	else
 		c->args.cmd_ping_pong.server2[0] = '\0';
 
@@ -592,14 +595,14 @@ static int parse_cmd_summon(const struct tokens *t, int tok, struct command *c)
 	if (t->counter - tok < 1)
 		return ERR_NORECIPIENT;
 
-	strcpy(c->args.cmd_summon.user, t->token[tok]);
+	xstrlcpy(c->args.cmd_summon.user, t->token[tok], sizeof(c->args.cmd_summon.user));
 
 	if (t->counter - tok >= 2) {
-		strcpy(c->args.cmd_summon.target, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_summon.target, t->token[tok+1], sizeof(c->args.cmd_summon.target));
 		if (t->counter - tok >= 3) {
 			if (! valid_channel_name(t->token[tok+2]))
 				return PARSE_ERROR;
-			strcpy(c->args.cmd_summon.channel, t->token[tok+2]);
+			xstrlcpy(c->args.cmd_summon.channel, t->token[tok+2], sizeof(c->args.cmd_summon.channel));
 		} else {
 			c->args.cmd_summon.channel[0] = '\0';
 		}
@@ -629,8 +632,10 @@ static int parse_cmd_userhost(const struct tokens *t, int tok, struct command *c
 	for (i = 0; i < num_args; ++i) {
 		if (! valid_nickname(t->token[tok+i]))
 			continue;
-		strcpy(c->args.cmd_userhost.nicknames[num_nicks++],
-		       t->token[tok+i]);
+		xstrlcpy(c->args.cmd_userhost.nicknames[num_nicks],
+			 t->token[tok+i],
+			 sizeof(c->args.cmd_userhost.nicknames[num_nicks]));
+		++num_nicks;
 	}
 	c->args.cmd_userhost.num_nicknames = num_nicks;
 
@@ -653,11 +658,14 @@ static int parse_cmd_ison(const struct tokens *t, int tok, struct command *c)
 		return ERR_NEEDMOREPARAMS;
 
 	for (num_nicks = 0, i = 0; i < num_args; ++i) {
-		strcpy(token, t->token[tok+i]);
+		xstrlcpy(token, t->token[tok+i], sizeof(token));
 		nick = strtok_r(token, " ", &saveptr);
 		while (nick != NULL) {
-			if (num_nicks < MAX_MESSAGE_PARAMS && valid_nickname(nick))
-				strcpy(c->args.cmd_ison.nicknames[num_nicks++], nick);
+			if (num_nicks < MAX_MESSAGE_PARAMS && valid_nickname(nick)) {
+				xstrlcpy(c->args.cmd_ison.nicknames[num_nicks], nick, sizeof(c->args.cmd_ison.nicknames[num_nicks]));
+				++num_nicks;
+			}
+
 			nick = strtok_r(NULL, " ", &saveptr);
 		}
 	}
@@ -680,7 +688,7 @@ static int parse_cmd_join(const struct tokens *t, int tok, struct command *c)
 	/* JOIN 0 */
 	if (t->counter - tok == 1 && strcmp(t->token[tok], "0") == 0) {
 		c->args.cmd_join.num_channels = 1;
-		strcpy(c->args.cmd_join.channels[0], "0");
+		xstrlcpy(c->args.cmd_join.channels[0], "0", sizeof(c->args.cmd_join.channels[0]));
 		c->args.cmd_join.num_keys = 0;
 		return 0;
 	}
@@ -690,7 +698,7 @@ static int parse_cmd_join(const struct tokens *t, int tok, struct command *c)
 
 	/* Parse channel list. */
 	i = 0;
-	strcpy(token, t->token[tok]);
+	xstrlcpy(token, t->token[tok], sizeof(token));
 	chan = strtok_r(token, ",", &saveptr);
 
 	while (chan != NULL) {
@@ -700,7 +708,8 @@ static int parse_cmd_join(const struct tokens *t, int tok, struct command *c)
 		if (i >= MAX_TARGETS)
 			return ERR_TOOMANYTARGETS;
 
-		strcpy(c->args.cmd_join.channels[i++], chan);
+		xstrlcpy(c->args.cmd_join.channels[i], chan, sizeof(c->args.cmd_join.channels[i]));
+		++i;
 
 		chan = strtok_r(NULL, ",", &saveptr);
 	}
@@ -715,7 +724,7 @@ static int parse_cmd_join(const struct tokens *t, int tok, struct command *c)
 
 	/* Parse key list. */
 	i = 0;
-	strcpy(token, t->token[tok+1]);
+	xstrlcpy(token, t->token[tok+1], sizeof(token));
 	key = strtok_r(token, ",", &saveptr);
 
 	while (key != NULL) {
@@ -725,7 +734,8 @@ static int parse_cmd_join(const struct tokens *t, int tok, struct command *c)
 		if (i >= MAX_TARGETS)
 			return ERR_TOOMANYTARGETS;
 
-		strcpy(c->args.cmd_join.keys[i++], key);
+		xstrlcpy(c->args.cmd_join.keys[i], key, sizeof(c->args.cmd_join.keys[i]));
+		++i;
 
 		key = strtok_r(NULL, ",", &saveptr);
 	}
@@ -746,14 +756,15 @@ static int parse_cmd_part(const struct tokens *t, int tok, struct command *c)
 
 	/* Parse channel list. */
 	i = 0;
-	strcpy(token, t->token[tok]);
+	xstrlcpy(token, t->token[tok], sizeof(token));
 	chan = strtok_r(token, ",", &saveptr);
 
 	while (chan != NULL) {
 		if (valid_channel_name(chan)) {
 			if (i >= MAX_TARGETS)
 				return ERR_TOOMANYTARGETS;
-			strcpy(c->args.cmd_part.channels[i++], chan);
+			xstrlcpy(c->args.cmd_part.channels[i], chan, sizeof(c->args.cmd_part.channels[i]));
+			++i;
 		}
 		chan = strtok_r(NULL, ",", &saveptr);
 	}
@@ -764,7 +775,7 @@ static int parse_cmd_part(const struct tokens *t, int tok, struct command *c)
 
 	/* Part message. */
 	if (t->counter - tok >= 2)
-		strcpy(c->args.cmd_part.message, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_part.message, t->token[tok+1], sizeof(c->args.cmd_part.message));
 	else
 		c->args.cmd_part.message[0] = '\0';
 
@@ -787,14 +798,15 @@ static int parse_cmd_names_list(const struct tokens *t, int tok, struct command 
 
 	/* Parse channel list. */
 	i = 0;
-	strcpy(token, t->token[tok]);
+	xstrlcpy(token, t->token[tok], sizeof(token));
 	chan = strtok_r(token, ",", &saveptr);
 
 	while (chan != NULL) {
 		if (valid_channel_name(chan)) {
 			if (i >= MAX_TARGETS)
 				return PARSE_ERROR;
-			strcpy(c->args.cmd_names_list.channels[i++], chan);
+			xstrlcpy(c->args.cmd_names_list.channels[i], chan, sizeof(c->args.cmd_names_list.channels[i]));
+			++i;
 		}
 		chan = strtok_r(NULL, ",", &saveptr);
 	}
@@ -805,7 +817,7 @@ static int parse_cmd_names_list(const struct tokens *t, int tok, struct command 
 
 	/* Target. */
 	if (t->counter - tok >= 2)
-		strcpy(c->args.cmd_names_list.target, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_names_list.target, t->token[tok+1], sizeof(c->args.cmd_names_list.target));
 	else
 		c->args.cmd_names_list.target[0] = '\0';
 
@@ -828,7 +840,7 @@ static int parse_cmd_kick(const struct tokens *t, int tok, struct command *c)
 
 	/* Parse channel list. */
 	i = 0;
-	strcpy(token, t->token[tok]);
+	xstrlcpy(token, t->token[tok], sizeof(token));
 	chan = strtok_r(token, ",", &saveptr);
 
 	while (chan != NULL) {
@@ -838,7 +850,7 @@ static int parse_cmd_kick(const struct tokens *t, int tok, struct command *c)
 		if (i >= MAX_TARGETS)
 			return PARSE_ERROR;
 
-		strcpy(c->args.cmd_kick.channels[i], chan);
+		xstrlcpy(c->args.cmd_kick.channels[i], chan, sizeof(c->args.cmd_kick.channels[i]));
 		c->args.cmd_kick.num_channels = ++i;
 
 		chan = strtok_r(NULL, ",", &saveptr);
@@ -849,7 +861,7 @@ static int parse_cmd_kick(const struct tokens *t, int tok, struct command *c)
 
 	/* Parse nickname list. */
 	i = 0;
-	strcpy(token, t->token[tok+1]);
+	xstrlcpy(token, t->token[tok+1], sizeof(token));
 	nick = strtok_r(token, ",", &saveptr);
 
 	while (nick != NULL) {
@@ -859,7 +871,7 @@ static int parse_cmd_kick(const struct tokens *t, int tok, struct command *c)
 		if (i >= MAX_TARGETS)
 			return PARSE_ERROR;
 
-		strcpy(c->args.cmd_kick.nicknames[i], nick);
+		xstrlcpy(c->args.cmd_kick.nicknames[i], nick, sizeof(c->args.cmd_kick.nicknames[i]));
 		c->args.cmd_kick.num_nicknames = ++i;
 
 		nick = strtok_r(NULL, ",", &saveptr);
@@ -876,7 +888,7 @@ static int parse_cmd_kick(const struct tokens *t, int tok, struct command *c)
 
 	/* Kick comment. */
 	if (t->counter - tok >= 3)
-		strcpy(c->args.cmd_kick.comment, t->token[tok+2]);
+		xstrlcpy(c->args.cmd_kick.comment, t->token[tok+2], sizeof(c->args.cmd_kick.comment));
 	else
 		c->args.cmd_kick.comment[0] = '\0';
 
@@ -887,7 +899,7 @@ static int parse_cmd_lusers(const struct tokens *t, int tok, struct command *c)
 {
 	/* Mask. */
 	if (t->counter - tok >= 1)
-		strcpy(c->args.cmd_lusers.mask, t->token[tok]);
+		xstrlcpy(c->args.cmd_lusers.mask, t->token[tok], sizeof(c->args.cmd_lusers.mask));
 	else {
 		c->args.cmd_lusers.mask[0] = '\0';
 		c->args.cmd_lusers.target[0] = '\0';
@@ -895,7 +907,7 @@ static int parse_cmd_lusers(const struct tokens *t, int tok, struct command *c)
 
 	/* Target. */
 	if (t->counter - tok >= 2)
-		strcpy(c->args.cmd_lusers.target, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_lusers.target, t->token[tok+1], sizeof(c->args.cmd_lusers.target));
 	else
 		c->args.cmd_lusers.target[0] = '\0';
 
@@ -917,12 +929,12 @@ static int parse_cmd_who(const struct tokens *t, int tok, struct command *c)
 	/* Mask. */
 	if (valid_channel_name(t->token[tok])) {
 		c->args.cmd_who.target_type = TYPE_CHAN;
-		strcpy(c->args.cmd_who.target.channel, t->token[tok]);
+		xstrlcpy(c->args.cmd_who.target.channel, t->token[tok], sizeof(c->args.cmd_who.target.channel));
 	} else if (valid_nickname(t->token[tok])) {
 		c->args.cmd_who.target_type = TYPE_NICK;
-		strcpy(c->args.cmd_who.target.nickname, t->token[tok]);
+		xstrlcpy(c->args.cmd_who.target.nickname, t->token[tok], sizeof(c->args.cmd_who.target.nickname));
 	} else
-		strcpy(c->args.cmd_who.target.mask, t->token[tok]);
+		xstrlcpy(c->args.cmd_who.target.mask, t->token[tok], sizeof(c->args.cmd_who.target.mask));
 
 	/* Possible second "o" argument. */
 	if (t->counter - tok >= 2) {
@@ -950,25 +962,27 @@ static int parse_cmd_whois(const struct tokens *t, int tok, struct command *c)
 	/* Possible "target" in between. */
 	if (t->counter - tok >= 2) {
 		list_token = tok + 1;
-		strcpy(c->args.cmd_whois.target, t->token[tok]);
+		xstrlcpy(c->args.cmd_whois.target, t->token[tok], sizeof(c->args.cmd_whois.target));
 	} else {
 		list_token = tok;
 		c->args.cmd_whois.target[0] = '\0';
 	}
 
 	/* Save original query string. */
-	strcpy(c->args.cmd_whois.orig_query, t->token[list_token]);
+	xstrlcpy(c->args.cmd_whois.orig_query, t->token[list_token], sizeof(c->args.cmd_whois.orig_query));
 
 	/* Parse nickname list. */
 	i = 0;
-	strcpy(token, t->token[list_token]);
+	xstrlcpy(token, t->token[list_token], sizeof(token));
 	nick = strtok_r(token, ",", &saveptr);
 
 	while (nick != NULL) {
 		if (i >= MAX_TARGETS)
 			return PARSE_ERROR;
 
-		strcpy(c->args.cmd_whois.nicknames[i++], nick);
+		xstrlcpy(c->args.cmd_whois.nicknames[i], nick, sizeof(c->args.cmd_whois.nicknames[i]));
+		++i;
+
 		nick = strtok_r(NULL, ",", &saveptr);
 	}
 	c->args.cmd_whois.num_nicknames = i;
@@ -991,14 +1005,14 @@ static int parse_cmd_whowas(const struct tokens *t, int tok, struct command *c)
 
 	/* Parse nickname list. */
 	i = 0;
-	strcpy(token, t->token[tok]);
+	xstrlcpy(token, t->token[tok], sizeof(token));
 	nick = strtok_r(token, ",", &saveptr);
 
 	while (nick != NULL) {
 		if (i >= MAX_TARGETS)
 			return PARSE_ERROR;
 
-		strcpy(c->args.cmd_whowas.nicknames[i], nick);
+		xstrlcpy(c->args.cmd_whowas.nicknames[i], nick, sizeof(c->args.cmd_whowas.nicknames[i]));
 		c->args.cmd_whowas.num_nicknames = ++i;
 
 		nick = strtok_r(NULL, ",", &saveptr);
@@ -1028,7 +1042,7 @@ static int parse_cmd_whowas(const struct tokens *t, int tok, struct command *c)
 
 	/* Possible "target" argument. */
 	if (t->counter - tok >= 3)
-		strcpy(c->args.cmd_whowas.target, t->token[tok+2]);
+		xstrlcpy(c->args.cmd_whowas.target, t->token[tok+2], sizeof(c->args.cmd_whowas.target));
 	else
 		c->args.cmd_whowas.target[0] = '\0';
 
@@ -1039,7 +1053,7 @@ static int parse_cmd_servlist(const struct tokens *t, int tok, struct command *c
 {
 	/* Mask. */
 	if (t->counter - tok >= 1)
-		strcpy(c->args.cmd_servlist.mask, t->token[tok]);
+		xstrlcpy(c->args.cmd_servlist.mask, t->token[tok], sizeof(c->args.cmd_servlist.mask));
 	else {
 		c->args.cmd_servlist.mask[0] = '\0';
 		c->args.cmd_servlist.type[0] = '\0';
@@ -1047,7 +1061,7 @@ static int parse_cmd_servlist(const struct tokens *t, int tok, struct command *c
 
 	/* Type. */
 	if (t->counter - tok >= 2)
-		strcpy(c->args.cmd_servlist.type, t->token[tok+1]);
+		xstrlcpy(c->args.cmd_servlist.type, t->token[tok+1], sizeof(c->args.cmd_servlist.type));
 	else
 		c->args.cmd_servlist.type[0] = '\0';
 
@@ -1087,7 +1101,7 @@ static int parse_cmd_mode_nick(const struct tokens *t, int tok, struct command *
 		return PARSE_ERROR;
 
 	/* Copy the nickname. */
-	strcpy(c->args.cmd_mode.mode_args.type_nick.nickname, t->token[tok]);
+	xstrlcpy(c->args.cmd_mode.mode_args.type_nick.nickname, t->token[tok], sizeof(c->args.cmd_mode.mode_args.type_nick.nickname));
 
 	/* Disable all action flags up-front. */
 	c->args.cmd_mode.mode_args.type_nick.away = NO_ACTION;
@@ -1165,7 +1179,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 		return PARSE_ERROR;
 
 	/* Extract channel name and disable everything by default. */
-	strcpy(c->args.cmd_mode.mode_args.type_chan.channel, t->token[tok]);
+	xstrlcpy(c->args.cmd_mode.mode_args.type_chan.channel, t->token[tok], sizeof(c->args.cmd_mode.mode_args.type_chan.channel));
 	c->args.cmd_mode.mode_args.type_chan.anonymous = NO_ACTION;
 	c->args.cmd_mode.mode_args.type_chan.invite_only = NO_ACTION;
 	c->args.cmd_mode.mode_args.type_chan.moderated = NO_ACTION;
@@ -1243,7 +1257,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 				j = c->args.cmd_mode.mode_args.type_chan.num_others;
 				c->args.cmd_mode.mode_args.type_chan.others[j].mode = MODE_OPER;
 				c->args.cmd_mode.mode_args.type_chan.others[j].action = ca;
-				strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+				xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 
 				c->args.cmd_mode.mode_args.type_chan.num_others = j+1;
 				++nexttok;
@@ -1263,7 +1277,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 				j = c->args.cmd_mode.mode_args.type_chan.num_others;
 				c->args.cmd_mode.mode_args.type_chan.others[j].mode = MODE_VOICE;
 				c->args.cmd_mode.mode_args.type_chan.others[j].action = ca;
-				strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+				xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 
 				c->args.cmd_mode.mode_args.type_chan.num_others = j+1;
 				++nexttok;
@@ -1280,7 +1294,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 				j = c->args.cmd_mode.mode_args.type_chan.num_others;
 				c->args.cmd_mode.mode_args.type_chan.others[j].mode = MODE_KEY;
 				c->args.cmd_mode.mode_args.type_chan.others[j].action = ca;
-				strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+				xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 
 				c->args.cmd_mode.mode_args.type_chan.num_others = j+1;
 				++nexttok;
@@ -1306,7 +1320,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 					if (endptr != t->token[nexttok] + strlen(t->token[nexttok]))
 						return PARSE_ERROR;
 
-					strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+					xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 					++nexttok;
 				} else
 					c->args.cmd_mode.mode_args.type_chan.others[j].param[0] = '\0';
@@ -1329,7 +1343,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 				if (nexttok < t->counter) {
 					if (! valid_channel_mask(t->token[nexttok]))
 						return PARSE_ERROR;
-					strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+					xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 					++nexttok;
 				} else
 					c->args.cmd_mode.mode_args.type_chan.others[j].param[0] = '\0';
@@ -1349,7 +1363,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 				if (nexttok < t->counter) {
 					if (! valid_channel_mask(t->token[nexttok]))
 						return PARSE_ERROR;
-					strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+					xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 					++nexttok;
 				} else
 					c->args.cmd_mode.mode_args.type_chan.others[j].param[0] = '\0';
@@ -1369,7 +1383,7 @@ static int parse_cmd_mode_chan(const struct tokens *t, int tok, struct command *
 				if (nexttok < t->counter) {
 					if (! valid_channel_mask(t->token[nexttok]))
 						return PARSE_ERROR;
-					strcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok]);
+					xstrlcpy(c->args.cmd_mode.mode_args.type_chan.others[j].param, t->token[nexttok], sizeof(c->args.cmd_mode.mode_args.type_chan.others[j].param));
 					++nexttok;
 				} else
 					c->args.cmd_mode.mode_args.type_chan.others[j].param[0] = '\0';
@@ -1407,7 +1421,7 @@ int parse_tokens(const struct tokens *t, struct command *c)
 	/* Command prefix. */
 	tok = 0;
 	if (t->token[tok][0] == ':') {
-		strcpy(c->prefix, t->token[tok]);
+		xstrlcpy(c->prefix, t->token[tok], sizeof(c->prefix));
 		++tok;
 	}
 
@@ -1527,44 +1541,44 @@ int parse_tokens(const struct tokens *t, struct command *c)
 
 		/* Commands receiving an optional "target" or "text". */
 	case CMD_MOTD:
-		copy_trailing_token_to(t, tok, c->args.cmd_motd.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_motd.target, sizeof(c->args.cmd_motd.target));
 		break;
 	case CMD_VERSION:
-		copy_trailing_token_to(t, tok, c->args.cmd_version.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_version.target, sizeof(c->args.cmd_version.target));
 		break;
 	case CMD_TIME:
-		copy_trailing_token_to(t, tok, c->args.cmd_time.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_time.target, sizeof(c->args.cmd_time.target));
 		break;
 	case CMD_TRACE:
-		copy_trailing_token_to(t, tok, c->args.cmd_trace.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_trace.target, sizeof(c->args.cmd_trace.target));
 		break;
 	case CMD_ADMIN:
-		copy_trailing_token_to(t, tok, c->args.cmd_admin.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_admin.target, sizeof(c->args.cmd_admin.target));
 		break;
 	case CMD_INFO:
-		copy_trailing_token_to(t, tok, c->args.cmd_info.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_info.target, sizeof(c->args.cmd_info.target));
 		break;
 	case CMD_USERS:
-		copy_trailing_token_to(t, tok, c->args.cmd_users.target);
+		copy_trailing_token_to(t, tok, c->args.cmd_users.target, sizeof(c->args.cmd_users.target));
 		break;
 	case CMD_AWAY:
-		copy_trailing_token_to(t, tok, c->args.cmd_away.text);
+		copy_trailing_token_to(t, tok, c->args.cmd_away.text, sizeof(c->args.cmd_away.text));
 		break;
 	case CMD_QUIT:
-		copy_trailing_token_to(t, tok, c->args.cmd_quit.message);
+		copy_trailing_token_to(t, tok, c->args.cmd_quit.message, sizeof(c->args.cmd_quit.message));
 		break;
 
 		/* Requiring a single argument. */
 	case CMD_WALLOPS:
-		if (copy_trailing_token_to(t, tok, c->args.cmd_wallops.text) == 0)
+		if (copy_trailing_token_to(t, tok, c->args.cmd_wallops.text, sizeof(c->args.cmd_wallops.text)) == 0)
 			return ERR_NEEDMOREPARAMS;
 		break;
 	case CMD_ERROR:
-		if (copy_trailing_token_to(t, tok, c->args.cmd_wallops.text) == 0)
+		if (copy_trailing_token_to(t, tok, c->args.cmd_wallops.text, sizeof(c->args.cmd_wallops.text)) == 0)
 			return PARSE_ERROR;
 		break;
 	case CMD_PASS:
-		if (copy_trailing_token_to(t, tok, c->args.cmd_pass.password) == 0)
+		if (copy_trailing_token_to(t, tok, c->args.cmd_pass.password, sizeof(c->args.cmd_pass.password)) == 0)
 			return ERR_NEEDMOREPARAMS;
 		break;
 

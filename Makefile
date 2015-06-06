@@ -47,8 +47,8 @@ saircd.1: saircd.txt
 	asciidoc -b docbook -d manpage saircd.txt
 	xmlto man saircd.xml
 
-messages_test: messages_test.o messages.o
-	$(CC) -o messages_test messages_test.o messages.o `pcre-config --libs`
+messages_test: messages_test.o messages.o util.o
+	$(CC) -o messages_test messages_test.o messages.o util.o `pcre-config --libs`
 
 messages_test.o: messages_test.c messages.h
 	$(CC) $(CFLAGS) -c messages_test.c

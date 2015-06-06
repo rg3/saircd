@@ -51,4 +51,7 @@ int i_am_superuser(void);
 /* Run chroot properly. */
 int chroot_to(const char *dirname);
 
+/* Implementation of OpenBSD strlcpy. */
+size_t xstrlcpy(char *dst, const char *src, size_t size);
+
 #endif

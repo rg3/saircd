@@ -248,3 +248,21 @@ int chroot_to(const char *dirname)
 		return -1;
 	return 0;
 }
+
+size_t xstrlcpy(char *dst, const char *src, size_t size)
+{
+	const char *orig_src = src;
+	size_t left;
+
+	for (left = size; left > 1 && *src != '\0'; --left)
+		*dst++ = *src++;
+
+	if (left > 0)
+		*dst = '\0';
+
+	while (*src != '\0')
+		++src;
+
+	return (src - orig_src);
+}
+

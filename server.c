@@ -55,6 +55,9 @@ static char *srv_malloc_msg(void);
 /* Free memory. */
 static void srv_free(char **ptr);
 
+/* Get the date string without the EOL terminator. */
+static void srv_ctime(const time_t *t, char *buffer, size_t bufsize);
+
 /* Caps IRC message to the given length. */
 static int srv_fix_message(char *msg, int max, int snprintfret);
 
@@ -293,6 +296,23 @@ static void srv_free(char **ptr)
 	assert(*ptr != NULL);
 	free(*ptr);
 	ptr = NULL;
+}
+
+static void srv_ctime(const time_t *t, char *buffer, size_t bufsize)
+{
+	assert(t != NULL);
+	assert(buffer != NULL);
+	assert(bufsize >= 26); /* At least 26 according to the manual page. */
+
+	char *ret = ctime_r(t, buffer);
+	if (ret == NULL) {
+		xstrlcpy(buffer, DEFAULT_DATE, bufsize);
+		return;
+	}
+
+	size_t len = strlen(buffer);
+	if (len > 0 && buffer[len-1] == '\n')
+		buffer[len-1] = '\0';
 }
 
 static int srv_fix_message(char *msg, int size, int snprintfret)
@@ -613,9 +633,9 @@ static void srv_send_reply_yourhost(struct server *srv, struct db_client *cli)
 
 static void srv_send_reply_created(struct server *srv, struct db_client *cli)
 {
-	char datestr[32]; /* At least 26 according to the manual page. */
+	char datestr[32];
 
-	ctime_r(&(srv->dyndata.start_time), datestr);
+	srv_ctime(&(srv->dyndata.start_time), datestr, sizeof(datestr));
 	srv_fmt_enq(srv, cli, ":%s %03d %s :This server was created %s\r\n",
 		    srv->config.server_name, RPL_CREATED, srv_dest_nick(cli), datestr);
 }
@@ -1741,13 +1761,13 @@ static void srv_process_links(struct server *srv, struct db_client *cli, struct 
 static void srv_process_time(struct server *srv, struct db_client *cli, struct command *c)
 {
 	time_t now;
-	char datestr[32]; /* At least 26 according to the manual page. */
+	char datestr[32];
 
 	if (strlen(c->args.cmd_time.target) > 0 && strcmp(c->args.cmd_time.target, srv->config.server_name) != 0)
 		srv_send_error_nosuchserver(srv, cli, c->args.cmd_time.target);
 	else {
 		now = time(NULL);
-		ctime_r(&now, datestr);
+		srv_ctime(&now, datestr, sizeof(datestr));
 
 		srv_fmt_enq(srv, cli, ":%s %03d %s %s :%s\r\n",
 			    srv->config.server_name, RPL_TIME, srv_dest_nick(cli),
@@ -1789,14 +1809,14 @@ static void srv_process_trace(struct server *srv, struct db_client *cli, struct 
 
 static void srv_process_info(struct server *srv, struct db_client *cli, struct command *c)
 {
-	char datestr[32]; /* At least 26 according to the manual page. */
+	char datestr[32];
 	const char *s;
 	const char *n;
 
 	if (strlen(c->args.cmd_info.target) > 0 && strcmp(c->args.cmd_info.target, srv->config.server_name) != 0)
 		srv_send_error_nosuchserver(srv, cli, c->args.cmd_info.target);
 	else {
-		ctime_r(&(srv->dyndata.start_time), datestr);
+		srv_ctime(&(srv->dyndata.start_time), datestr, sizeof(datestr));
 		s = srv->config.server_name;
 		n = srv_dest_nick(cli);
 

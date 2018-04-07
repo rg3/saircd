@@ -23,6 +23,7 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 
+#define DEFAULT_DATE ("N/A")
 #define MAX_ADDRESS_LEN	(39)
 #define ADDRESS_BUFFER_SIZE (MAX_ADDRESS_LEN + 1)
 

@@ -3083,6 +3083,7 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 	struct server *srv;
 	char *message = srv_malloc_msg();
 	int ret;
+	int dbret;
 
 	srv = srv_;
 
@@ -3111,8 +3112,8 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 	}
 
 	/* If data was read from the file descriptor, the client MUST exist. */
-	ret = db_get_client_by_fd(srv->db, fd, &cli);
-	assert(ret == 0);
+	dbret = db_get_client_by_fd(srv->db, fd, &cli);
+	assert(dbret == 0);
 
 	/* Process command. */
 	if (ret == 0)
@@ -3126,8 +3127,8 @@ static void srv_reader_cb(int fd, const char *msg, int msglen, void *srv_)
 
 	/* Penalize client. */
 	cli.last_activity += CLIENT_PENALIZATION;
-	ret = db_modify_client(srv->db, &cli);
-	assert(ret == 0);
+	dbret = db_modify_client(srv->db, &cli);
+	assert(dbret == 0);
 
 out:
 	srv_free(&message);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Ricardo Garcia Gonzalez
+ * Copyright 2012,2018 Ricardo Garcia Gonzalez
  * 
  * This file is part of saircd.
  * 

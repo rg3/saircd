@@ -2033,7 +2033,7 @@ static void srv_whois_cb(void *chan_, void *args_)
 	ret = db_get_membership(args->srv->db, chan->id_channel, args->wn->id_client, &w_memb);
 	assert(ret == 0);
 
-	srv_fmt_enq(args->srv, args->cli, ":%s %03d %s %s %s%s\r\n",
+	srv_fmt_enq(args->srv, args->cli, ":%s %03d %s %s :%s%s\r\n",
 		    args->srv->config.server_name, RPL_WHOISCHANNELS,
 		    srv_dest_nick(args->cli), args->wn->orig_nickname,
 		    srv_memb_symbol(&w_memb), chan->orig_name);
